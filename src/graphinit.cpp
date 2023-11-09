@@ -421,8 +421,8 @@ void Assign_wire_info() {
       int a= it.first;
 
       int b= it.second;
-
-
+    
+      std::cout<<"---"<<std::endl;
   }  
   
 
