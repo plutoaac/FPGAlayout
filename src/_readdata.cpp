@@ -40,10 +40,10 @@ bool ReadDataSource::_readnet() {
 
         DriverId = num;
 
-        Task[netid].push_back(DriverId);
+        Task[netid].push_back({DriverId,0});
 
       } else {
-        Task[netid].push_back(num);
+        Task[netid].push_back({num,0});
       }
       // Debug
       // std::cout << line << std::endl;

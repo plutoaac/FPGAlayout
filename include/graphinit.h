@@ -40,3 +40,7 @@ int Set_DieNum();
 int Get_Sll_Delay();
 //分配wire信息（***方向）
 void Assign_wire_info();
+//输出布线结果
+void Print_Layout_Res();
+//输出TDM分配结果
+void Print_Tdm_Res();

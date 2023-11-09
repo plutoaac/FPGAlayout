@@ -1,12 +1,13 @@
 #include "graphinit.h"
 
+#include <algorithm>
 #include <array>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <queue>
 #include <utility>
 #include <vector>
-#include <algorithm>
 
 #include "_readdata.h"
 
@@ -40,22 +41,22 @@ std::vector<int> line;
 // Die之间的连线使用情况
 int use[V][V];
 
-//每一条路径的时延
-std::unordered_map<int,std::unordered_map<int,double>>Net_Die_Path_delay;
+// 每一条路径的时延    好像不太用？
+// std::unordered_map<int,std::unordered_map<int,double>>Net_Die_Path_delay;
 
 // 每一个net的结点的路径
-std::unordered_map<int, std::unordered_map<int, std::vector<int> > >Net_Die_Path;
+std::unordered_map<int, std::unordered_map<int, std::vector<int>>> Net_Die_Path;
 
-//Wire的最大的netid 以及最大权值
-std::unordered_map<std::pair<int,int>, std::unordered_map<int,double> >Net_on_Wire_Max_Val;
+// Wire的最大的netid 以及最大权值
+std::unordered_map<std::pair<int, int>, std::unordered_map<int, double>>
+    Net_on_Wire_Max_Val;
 
-//每一个Wire上通过的net
-std::unordered_map<std::pair<int, int>, std::vector<std::vector<int> >> Net_on_Wire;
-
-
+// 每一个Wire上通过的net
+std::unordered_map<std::pair<int, int>, std::vector<std::vector<int>>>
+    Net_on_Wire;
 
 // netid到斯坦纳树边的集合的映射
-std::unordered_map<int, std::vector<int> > linemp;
+std::unordered_map<int, std::vector<int>> linemp;
 
 // 输出路径的辅助数组
 std::array<int, 3> pre[V][1 << 21];
@@ -67,26 +68,35 @@ std::vector<int> G[V];
 int vis2[V];
 
 // dij转移使用的堆
-std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int> >,
-                    std::greater<std::pair<int, int> > >
+std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>,
+                    std::greater<std::pair<int, int>>>
     q;
 
 // 每一组net的Die上的所包含的结点信息
 std::unordered_set<int> Net_DieToNode[V];
 
-//每一条跨fpga 所经过的netid的 max delay val的权值
-struct node{
+// 每一条跨fpga 所经过的netid的 max delay val的权值
+struct node {
+  /*
+
+     还可以加一维度 和最大值差值嘛
+  */
+
   int id;
-  double  Max_Val{0.0};
+  double Max_Val{0.0};
 };
-std::vector<node>Net_on_Wire_SS;
+std::vector<node> Net_on_Wire_SS;
 
+// 临时Wire的集合 （考虑方向） BFS树不可能有重边
+std::vector<std::pair<int, int>> Tmp_Net_on_Wire_S;
 
-//临时Wire的集合 （考虑方向） BFS树不可能有重边
-std::vector<std::pair<int,int> >Tmp_Net_on_Wire_S;
+// 全局的Wire集合
+std::vector<std::pair<int, int>> Glo_Wire_Set;
 
-//全局的Wire集合
-std::unordered_set<std::pair<int,int> >Glo_Wire_Set;
+// 每一组Net的最大时延
+std::vector<std::pair<int, double>> Net_Max_Delay;
+
+//
 
 //---------------------------------------------------------------------------
 
@@ -125,6 +135,7 @@ int Set_DieNum() { DieNum = RG.DieNum; }
 
 // 最短路进行dp转移
 void dijkstra(int s) {
+  
   for (int i = 0; i < ReadDataSource::getInstance().DieNum; i++) {
     st[i] = 0;
   }
@@ -183,7 +194,7 @@ void solve() {
     int vis[20] = {0};
 
     for (auto node : net.second) {
-      vis[RG.NodeToDie_Map[node]] = 1;
+      vis[RG.NodeToDie_Map[node.first]] = 1;
     }
 
     for (int i = 0; i < DieNum; ++i) {
@@ -290,7 +301,10 @@ void Init_Tree(int netid) {
     // Debug
     // std::cout << RG.NodeToDie_Map[it] << " " << it << std::endl;
 
-    Net_DieToNode[RG.NodeToDie_Map[it]].insert(it);
+    // 第一个结点是驱动结点 我们这里只存储 每一组net的Die上所包含的负载结点
+    if (it.first == RG.Task[netid][0].first) continue;
+
+    Net_DieToNode[RG.NodeToDie_Map[it.first]].insert(it.first);
   }
   // Debug
   // std::cout << "end" << std::endl;
@@ -306,17 +320,19 @@ void printnet_path(int netid) {
   //  std::cout<<"-------------------"<<std::endl;
 
   // BFS使用的队列
-  std::queue<std::pair<int, std::vector<int> > > q;
+  std::queue<std::pair<int, std::vector<int>>> q;
 
   // 初始化BFStree
   Init_Tree(netid);
 
-  int tmp = RG.NodeToDie_Map[RG.Task[netid][0]];
+  // 驱动结点所属于的Die
+  int tmp = RG.NodeToDie_Map[RG.Task[netid][0].first];
 
   // 处理属于同一个Die的情况
   for (auto &it : Net_DieToNode[tmp]) {
-    if (it != tmp) {
-    }
+    // 如果在同一个Die里面 那么他的路径只有驱动结点所在的Die   Delay为0
+
+    Net_Die_Path[netid][it].push_back(tmp);
   }
 
   std::vector<int> v;
@@ -335,14 +351,12 @@ void printnet_path(int netid) {
 
     for (auto v : G[u]) {
       if (!vis2[v]) {
-        vis2[v] = 1; 
+        vis2[v] = 1;
 
         ve.push_back(v);
 
         // 不在同一个FPGA
         if (RG.DieToFpga_Map[u] != RG.DieToFpga_Map[v]) {
-        
-           
           wiresig[u][v]++;
         }
 
@@ -354,21 +368,22 @@ void printnet_path(int netid) {
     }
   }
   // Debug
-  std::unordered_map<int, std::vector<int> > tmp2;
+  // 输出 负载节点-- 路径 所经过的结点
+  // std::unordered_map<int, std::vector<int> > tmp2;
 
-  tmp2 = Net_Die_Path[netid];
+  // tmp2 = Net_Die_Path[netid];
 
-  std::cout << "print node ----  path" << std::endl;
-  for (auto &&it : tmp2) {
-    std::cout << it.first << "----";
+  // std::cout << "print node ----  path" << std::endl;
+  // for (auto &&it : tmp2) {
+  //   std::cout << it.first << "----";
 
-    for (auto &&v : it.second) {
-      std::cout << v << " ";
-    }
+  //   for (auto &&v : it.second) {
+  //     std::cout << v << " ";
+  //   }
 
-    std::cout << std::endl;
-  }
-  std::cout << "-----------------------------------------" << std::endl;
+  //   std::cout << std::endl;
+  // }
+  // std::cout << "-----------------------------------------" << std::endl;
 }
 
 // 后续需要改
@@ -384,105 +399,109 @@ void Assign_wire_info() {
   //   // int p=
   // }
 
-   
-  //将一条wire上的所经过的net的 max vir val 排序    Glo
+  // 将一条wire上的所经过的net的 max vir val 排序    Glo
 
-  for(auto &&it:Glo_Wire_Set){
-      
-      //wire的两端  Die的编号
-      int a= it.first;
-      int b= it.second;
-   
-     for(auto &&it2:  Net_on_Wire_Max_Val [{a,b}]){
-          
-          //netid和其对应的最大的权值 Glo
-          int Netid=it2.first;
-          double val=it2.second; 
+  for (auto &&it : Glo_Wire_Set) {
+    // wire的两端  Die的编号
+    int a = it.first;
+    int b = it.second;
 
-          Net_on_Wire_SS.push_back(node{Netid,val});
-     }
+    for (auto &&it2 : Net_on_Wire_Max_Val[{a, b}]) {
+      // netid和其对应的最大的权值 Glo
+      int Netid = it2.first;
+      double val = it2.second;
+
+      Net_on_Wire_SS.push_back(node{Netid, val});
+    }
   }
 
-  //将全局的每一条Wire的最大权值进行排序
-  sort(Net_on_Wire_SS.begin(),Net_on_Wire_SS.end(),
-   [](node a,node b)->bool{
-        return a.Max_Val>b.Max_Val;
-   } 
-  );
+  // 将全局的每一条Wire的最大权值进行排序
+  sort(Net_on_Wire_SS.begin(), Net_on_Wire_SS.end(),
+       [](node a, node b) -> bool { return a.Max_Val > b.Max_Val; });
+
+  for (const std::pair<int, int> &it : Glo_Wire_Set) {
+    // wire的两端  Die的编号
+    int a = it.first;
+
+    int b = it.second;
+
+    std::cout << "---" << std::endl;
+
+    /*
 
 
 
-  //1.优先队列合并
-  //2.线段树如何合并
 
-  for(auto &&it:Glo_Wire_Set){
-      
-      //wire的两端  Die的编号
-      int a= it.first;
 
-      int b= it.second;
-    
-      std::cout<<"---"<<std::endl;
-  }  
-  
 
+
+
+
+
+
+
+
+    */
+  }
 }
 
 int calcdelay(int netid) {
-  //下标从1开始  0为驱动结点
+  // 下标从1开始  0为驱动结点
   for (int i = 1; i < RG.Task[netid].size(); i++) {
-    //拿到负载节点
-    int id = RG.Task[netid][i];
+    // 负载节点
+    int id = RG.Task[netid][i].first;
     // int fi = *Net_Die_Path[netid][id].begin();
-    //初始化每一组nie的结点的延时为0
-    double Delay_ans=0;
+    // 初始化每一组nie的结点的延时为0
+    double Delay_ans = 0;
+
+    // 遍历驱动节点到负载结点的路径  存的是结点信息 所经过的结点
     for (int j = 1; j < Net_Die_Path[netid][id].size(); j++) {
-      
+      // 当前结点
       int next2 = Net_Die_Path[netid][id][j];
-      
+      // 前一个结点
       int next1 = Net_Die_Path[netid][id][j - 1];
-      
+
+      // 如果不在同一个FPGA
       if (RG.DieToFpga_Map[next1] != RG.DieToFpga_Map[next2]) {
-        // 本次处理net所经过的跨越FPGA的Die 的集合
+        // 本次处理net所经过的跨越FPGA的Die 的集合   每次处理都需要清空
         Tmp_Net_on_Wire_S.push_back({next1, next2});
 
-        //将该条Wire扔进全局的Wire集合
-        Glo_Wire_Set.insert(std::make_pair(next1,next2));  
+        // 将该条Wire扔进全局的Wire集合
+        Glo_Wire_Set.push_back(std::make_pair(next1, next2));
 
         Net_on_Wire[{next1, next2}][netid].push_back(id);
 
         // （2*x+1）/2   val% 4.5==0   首先按照只消耗了最低的delay考虑
         // 后续继续动态调整
-        Delay_ans += 4.5;  
-      
-      }else{
+        Delay_ans += 4.5;
 
+      } else {
         Delay_ans++;
-      
       }
+    }
+    RG.Task[netid][i].second = Delay_ans;
 
+    // 这东西不用了 存在second 就行了
+    //  Net_Die_Path_delay[netid][id]=Delay_ans;
+
+    // 遍历本次Wire所涉及到Die
+    // 我们只有跑完Delay才能统计出来
+    for (auto &&it : Tmp_Net_on_Wire_S) {
+      int a = it.first;
+
+      int b = it.second;
+
+      Net_on_Wire_Max_Val[{a, b}][netid] =
+          std::max(Delay_ans, Net_on_Wire_Max_Val[{a, b}][netid]);
     }
 
-    Net_Die_Path_delay[netid][id]=Delay_ans;
-    
-    for(auto &&it:Tmp_Net_on_Wire_S){
-      
-      int a=it.first;
-
-      int b=it.second;
-      
-      Net_on_Wire_Max_Val[{a,b}][netid]=std::max(Delay_ans, Net_on_Wire_Max_Val[{a,b}][netid]);
-
-   
-    }
-
-    //每次处理一条驱动节点到负载节点 清空临时的Wire集合
+    // 每次处理一条驱动节点到负载节点 清空临时的Wire集合
     Tmp_Net_on_Wire_S.clear();
   }
-
 }
 
 void adjustpath() {
+  /*
 
 
 
@@ -490,4 +509,115 @@ void adjustpath() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  */
+}
+
+void Print_Layout_Res() {
+  std::ofstream outputFile("./design.route.out");
+
+  if (outputFile.is_open()) {
+    for (auto &&it : RG.Task) {
+      // 输出netid
+      outputFile << "[" << it.first << "]" << std::endl;
+
+      std::vector<std::pair<int, double>> outve = it.second;
+
+      outve.erase(outve.begin());
+
+      sort(outve.begin(), outve.end(),
+           // 时延排序的的lambda函数 从大到小
+           [](std::pair<int, double> a, std::pair<int, double> b) -> bool {
+             return a.second > b.second;
+           });
+      // 保存一下使用过的netid
+      Net_Max_Delay.push_back({it.first, outve[0].second});
+
+      // 重新移动到Task  已经排好序 并且已经去点了驱动节点
+      it.second = std::move(outve);
+    }
+    // 按照所有net的最大值排序
+    sort(Net_Max_Delay.begin(), Net_Max_Delay.end(),
+
+         // 每组net的时延排序的函数 从大到小
+         [](std::pair<int, double> a, std::pair<int, double> b) -> bool {
+           return a.second > b.second;
+         });
+
+    // it.first为netid
+    for (const std::pair<int, int> &it : Net_Max_Delay) {
+      // id.second 为负载结点
+      for (const std::pair<int, int> &id : RG.Task[it.first]) {
+        outputFile << '[';
+        // Net_Die_Path[it][id]
+        for (const auto node : Net_Die_Path[it.first][id.first]) {
+          if (node != Net_Die_Path[it.first][id.first].back())
+            outputFile << node << ",";
+          else {
+            outputFile << node << ']';
+          }
+        }
+        outputFile << '[';
+        outputFile << it.second;
+        outputFile << ']' << std::endl;
+      }
+    }
+
+    outputFile.close();
+  } else {
+    // 错误处理
+    std::cerr << "无法打开文件" << std::endl;
+  }
+}
+
+void Print_Tdm_Res() {
+  std::ofstream outputFile("./design.tdm.out");
+
+  if (outputFile.is_open()) {
+    for (const auto &pi : Glo_Wire_Set) {
+      int cur1 = pi.first;
+      int cur2 = pi.second;
+
+      outputFile << '[Die' << cur1 << ",Die" << cur2 << ']' << std::endl;
+
+      // 输出所经过的net [net1,net2,net3,......]   TDM Rdtio
+      /*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      */
+    }
+
+    outputFile.close();
+  } else {
+    // 错误处理
+    std::cerr << "无法打开文件" << std::endl;
+  }
 }

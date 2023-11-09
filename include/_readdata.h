@@ -39,9 +39,10 @@ class ReadDataSource {
   // 结点到Die的映射 每一个结点属于哪个Die
   std::unordered_map<int, int> NodeToDie_Map;
   // 驱动节点的数量
-  const int DriverNum = 0;
+  int DriverNum = 0;
   // 求解的每一组net 驱动到负载结点
-  std::map<int, std::vector<int>> Task;
+  std::map<int, std::vector<std::pair<int,double>>> Task;
+  
   // 读入design.net文件
   bool _readnet();
 
