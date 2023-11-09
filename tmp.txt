@@ -1,0 +1,65 @@
+
+#指定了动态库的头文件目录  编译main.cpp的时候也可以找到头文件  
+#cmake 包含了子目录后 在子目录里面对于父目录的变量是可见的 
+
+
+#add_subdirectory() 添加子目录
+
+
+cmake_minimum_required(VERSION 3.10)
+
+project(demo)
+
+
+set(CMAKE_CXX_STANDARD 11)
+
+set(CMAKE_BUILD_TYPE  Debug)
+
+#add_compile_options("$<$<CONFIG:Debug>:-g;-O0")
+set(root  ${CMAKE_SOURCE_DIR})
+
+#include_directories(${CMAKE_SOURCE_DIR}/include)
+#add_library(hello  STATIC  a.cpp)
+
+add_library (hello  SHARED  a.cpp)
+target_include_directories(hello PUBLIC   ${root}/include)
+
+
+
+add_executable(cmake_aa  main.cpp)
+target_link_libraries(cmake_aa hello )
+
+
+
+  
+# 如何引入外部库
+#include_directories(/usr/local/include)
+
+#find_library(LIBS  xxx  /usr/local/lib)
+
+#add_executable(yyy  yyy.cpp)
+
+#target_link_libraries(yyy  ${LIBS})
+
+##
+#find_package
+
+# git  submodule  add git@gitee.com:roberchen/spdlog.git
+# git submodule init
+# git submodule update --init --recursive
+
+#git submodule deinit -f path/to/submodele
+#git rm -f path/to/submodule
+# rm  -rf .git/module/path/to/submodule
+
+#target_link_libraries (gtest_test GTest::gtest GTest::gtest)
+
+
+#Fetchcontext
+ 
+
+
+
+
+
+
