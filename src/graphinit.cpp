@@ -40,9 +40,12 @@ std::vector<int> line;
 
 // Die之间的连线使用情况
 int use[V][V];
+std::unordered_map<std::pair<int, int>, std::vector<int>>SLL_Use;// Die之间的SLL连线使用情况,具体记录使用的netid
 
-// 每一条路径的时延    好像不太用？
-// std::unordered_map<int,std::unordered_map<int,double>>Net_Die_Path_delay;
+// 每一条路径的时延
+std::unordered_map<int,std::unordered_map<int,double>>Net_Die_Path_delay;
+// 每一组net的最大时延 计算中使用
+std::unordered_map<int,double>Net_Max_delay;
 
 // 每一个net的结点的路径
 std::unordered_map<int, std::unordered_map<int, std::vector<int>>> Net_Die_Path;
@@ -93,7 +96,7 @@ std::vector<std::pair<int, int>> Tmp_Net_on_Wire_S;
 // 全局的Wire集合
 std::vector<std::pair<int, int>> Glo_Wire_Set;
 
-// 每一组Net的最大时延
+// 每一组Net的最大时延 输出时使用
 std::vector<std::pair<int, double>> Net_Max_Delay;
 
 //
@@ -269,12 +272,18 @@ void solve() {
       int b = e[it];
 
       if (RG.DieToFpga_Map[a] == RG.DieToFpga_Map[b]) {
-        RG.datatmp[a][b]--, RG.datatmp[b][a]--;
-        use[a][b]++;
-        use[b][a]++;
+        if(use[a][b] == RG.data[a][b])
+        {
+          adjustpath(a,b);
+        }
+        // RG.datatmp[a][b]--, RG.datatmp[b][a]--;
+        // use[a][b]++;
+        // use[b][a]++;
+        // SLL_Use[{a,b}].push_back(netid);
+        // SLL_Use[{b,a}].push_back(netid);
       }
     }
-
+    
     linemp[netid] = std::move(line);
 
     line.clear();
@@ -480,6 +489,8 @@ int calcdelay(int netid) {
       }
     }
     RG.Task[netid][i].second = Delay_ans;
+    //更新最大延时
+    Net_Max_delay[netid]=std::max(Net_Max_delay[netid],Delay_ans);
 
     // 这东西不用了 存在second 就行了
     //  Net_Die_Path_delay[netid][id]=Delay_ans;
@@ -500,7 +511,17 @@ int calcdelay(int netid) {
   }
 }
 
-void adjustpath() {
+void adjustpath(int i,int j)
+{
+  int del = use[i][j] - RG.data[i][j];
+  std::vector<std::pair<int, double>> Cal_Temp;
+  for (auto it : SLL_Use[{i, j}])
+  {
+    Cal_Temp.push_back({it, Net_Max_delay[it]});
+  }
+  sort(Cal_Temp.begin(), Cal_Temp.end(), [](std::pair<int, double> a, std::pair<int, double> b) -> bool
+       { return a.second < b.second; });
+
   /*
 
 
