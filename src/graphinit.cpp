@@ -16,6 +16,13 @@
 
 #define RG ReadDataSource ::getInstance()
 
+struct pair_hash {
+  template <class T1, class T2>
+  std::size_t operator()(const std::pair<T1, T2> &pair) const {
+    return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+  }
+};
+
 // 全局最大延时
 int Glo_Max_Delay;
 
@@ -48,11 +55,13 @@ int use[V][V];
 std::unordered_map<int, std::unordered_map<int, std::vector<int>>> Net_Die_Path;
 
 // Wire的最大的netid 以及最大权值
-std::unordered_map<std::pair<int, int>, std::unordered_map<int, double>>
+std::unordered_map<std::pair<int, int>, std::unordered_map<int, double>,
+                   pair_hash>
     Net_on_Wire_Max_Val;
 
 // 每一个Wire上通过的net
-std::unordered_map<std::pair<int, int>, std::vector<std::vector<int>>>
+std::unordered_map<std::pair<int, int>, std::vector<std::vector<int>>,
+                   pair_hash>
     Net_on_Wire;
 
 // netid到斯坦纳树边的集合的映射
@@ -135,7 +144,6 @@ int Set_DieNum() { DieNum = RG.DieNum; }
 
 // 最短路进行dp转移
 void dijkstra(int s) {
-  
   for (int i = 0; i < ReadDataSource::getInstance().DieNum; i++) {
     st[i] = 0;
   }
@@ -281,6 +289,7 @@ void solve() {
 
     printnet_path(netid);
 
+
     // 清空生成树连边信息
     for (int i = 0; i < DieNum; i++) {
       G[i].clear();
@@ -288,6 +297,7 @@ void solve() {
     // Debug
     // return;
   }
+   adjustpath();
 }
 
 void Init_Tree(int netid) {
@@ -367,23 +377,24 @@ void printnet_path(int netid) {
       }
     }
   }
-  // Debug
+  //  Debug
   // 输出 负载节点-- 路径 所经过的结点
-  // std::unordered_map<int, std::vector<int> > tmp2;
+  std::unordered_map<int, std::vector<int>> tmp2;
 
-  // tmp2 = Net_Die_Path[netid];
+  tmp2 = Net_Die_Path[netid];
 
-  // std::cout << "print node ----  path" << std::endl;
-  // for (auto &&it : tmp2) {
-  //   std::cout << it.first << "----";
+  std::cout << "print node ----  path" << std::endl;
+  for (auto &&it : tmp2) {
+    std::cout << it.first << "----";
 
-  //   for (auto &&v : it.second) {
-  //     std::cout << v << " ";
-  //   }
+    for (auto &&v : it.second) {
+      std::cout << v << " ";
+    }
 
-  //   std::cout << std::endl;
-  // }
-  // std::cout << "-----------------------------------------" << std::endl;
+    std::cout << std::endl;
+  }
+  std::cout << "-----------------------------------------" << std::endl;
+
 }
 
 // 后续需要改
@@ -474,7 +485,6 @@ int calcdelay(int netid) {
         // （2*x+1）/2   val% 4.5==0   首先按照只消耗了最低的delay考虑
         // 后续继续动态调整
         Delay_ans += 4.5;
-
       } else {
         Delay_ans++;
       }
@@ -503,29 +513,23 @@ int calcdelay(int netid) {
 void adjustpath() {
   /*
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   */
+  //Debug
+  // for (int i = 0; i < RG.DieNum; i++) {
+  //   for (int j = 0; j < RG.DieNum; j++) {
+  //     std::cout << use[i][j] << " ";
+  //   }
+  //   std::cout << std::endl;
+  // }
+  for (int i = 0; i < RG.DieNum; i++) {
+      for (int j = i+1; j < RG.DieNum; j++) {
+         if(use[i][j]>RG.data[i][j]){
+           std::cout << "#" << i << " " << j << " " << use[i][j] - RG.data[i][j]<<std::endl;
+         }
+          
+      }
+      std::cout << std::endl;
+    }
 }
 
 void Print_Layout_Res() {
@@ -534,7 +538,7 @@ void Print_Layout_Res() {
   if (outputFile.is_open()) {
     for (auto &&it : RG.Task) {
       // 输出netid
-      outputFile << "[" << it.first << "]" << std::endl;
+      // outputFile << "[" << it.first << "]" << std::endl;
 
       std::vector<std::pair<int, double>> outve = it.second;
 
@@ -561,6 +565,9 @@ void Print_Layout_Res() {
 
     // it.first为netid
     for (const std::pair<int, int> &it : Net_Max_Delay) {
+      // 输出netid
+      outputFile << "[" << it.first << "]" << std::endl;
+
       // id.second 为负载结点
       for (const std::pair<int, int> &id : RG.Task[it.first]) {
         outputFile << '[';
