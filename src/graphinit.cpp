@@ -1,9 +1,12 @@
 #include "graphinit.h"
 
+#include <assert.h>
+
 #include <algorithm>
 #include <array>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <queue>
 #include <utility>
@@ -15,6 +18,8 @@
 //----------------------------------------------------------------------
 
 #define RG ReadDataSource ::getInstance()
+
+#define __TIMIT 4
 
 struct pair_hash {
   template <class T1, class T2>
@@ -47,6 +52,8 @@ std::vector<int> line;
 
 // Die之间的连线使用情况
 int use[V][V];
+//  SLL到达瓶颈标志
+int flag{0};
 
 // 每一条路径的时延    好像不太用？
 // std::unordered_map<int,std::unordered_map<int,double>>Net_Die_Path_delay;
@@ -55,8 +62,7 @@ int use[V][V];
 std::unordered_map<int, std::unordered_map<int, std::vector<int>>> Net_Die_Path;
 
 // Wire的最大的netid 以及最大权值
-std::unordered_map<std::pair<int, int>, std::unordered_map<int, double>,
-                   pair_hash>
+std::map<std::pair<int, int>, std::unordered_map<int, double>>
     Net_on_Wire_Max_Val;
 
 // 每一个Wire上通过的net
@@ -94,7 +100,10 @@ struct node {
   int id;
   double Max_Val{0.0};
 };
-std::vector<node> Net_on_Wire_SS;
+// 有序
+std::unordered_map<std::pair<int, int>, std::vector<node>, pair_hash>
+    Net_on_Wire_SS;
+// std::vector<node> Net_on_Wire_SS;
 
 // 临时Wire的集合 （考虑方向） BFS树不可能有重边
 std::vector<std::pair<int, int>> Tmp_Net_on_Wire_S;
@@ -105,7 +114,19 @@ std::vector<std::pair<int, int>> Glo_Wire_Set;
 // 每一组Net的最大时延
 std::vector<std::pair<int, double>> Net_Max_Delay;
 
-//
+// Wire的使用结果
+std::unordered_map<std::pair<int, int>, std::map<int, std::vector<int>>,
+                   pair_hash>
+    Wire_Res;
+
+// 存储临时的超限的信号
+std::vector<std::pair<int, double>> Tmp_S;
+
+// 并查集的fa结点
+std::unordered_map<int, int> fa;
+
+// 额外的时延权值
+std::unordered_map<int, double> Extra_Delay_val;
 
 //---------------------------------------------------------------------------
 
@@ -134,11 +155,19 @@ void Add_Edge(int u, int v, int c) {
 // 如果当前可以使用的sll数量越大权值越小
 //  权值越小斯坦纳树选到该边的概率越小
 int Edge_Val(int CurNum) {
-  return -1 * CurNum + ReadDataSource::getInstance().Max_SLL + 1;
+  // Debug
+
+  if (flag <= __TIMIT) return CurNum + 1;
+  return 5;
+  // return -1 * CurNum + ReadDataSource::getInstance().Max_SLL + 2;
 }
 
 // 记住改写
-int Wire_Val() { return 1; }
+int Wire_Val(int CurNum) {
+  if (flag <= __TIMIT) return 20304 - static_cast<int>(CurNum) * 0.2;
+
+  return 1;
+}
 
 int Set_DieNum() { DieNum = RG.DieNum; }
 
@@ -213,19 +242,19 @@ void solve() {
 
     for (int i = 0; i < DieNum; ++i) {
       for (int j = i + 1; j < DieNum; ++j) {
-        if (RG.datatmp[i][j] == 0) continue;  // 不连通则跳出
+        if (RG.data[i][j] == 0) continue;  // 不连通则跳出
         // 在同一个fpga
         if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j]) {
-          Add_Edge(i, j, Edge_Val(RG.datatmp[i][j]));
+          Add_Edge(i, j, Edge_Val(use[i][j]));
 
-          Add_Edge(j, i, Edge_Val(RG.datatmp[i][j]));
+          Add_Edge(j, i, Edge_Val(use[i][j]));
           //  std::cout<<cnt1-1<<" "<<i<<" "<<j<<std::endl;
         }
         // 跨fpga
         else {
-          Add_Edge(i, j, Wire_Val());
+          Add_Edge(i, j, Wire_Val(use[i][j]));
 
-          Add_Edge(j, i, Wire_Val());
+          Add_Edge(j, i, Wire_Val(use[i][j]));
           //  std::cout << cnt1-1 << " " << i << " " << j << std::endl;
         }
       }
@@ -267,7 +296,7 @@ void solve() {
     printedge(key[0], mx - 1);
 
     // DeBug
-    std::cout << "------------------" << std::endl;
+    // std::cout << "------------------" << std::endl;
     //  std::cout << dp[key[0]][mx - 1] << std::endl;
     //  std::cout << "-----------" << std::endl;
 
@@ -277,7 +306,11 @@ void solve() {
       int b = e[it];
 
       if (RG.DieToFpga_Map[a] == RG.DieToFpga_Map[b]) {
-        RG.datatmp[a][b]--, RG.datatmp[b][a]--;
+        assert(use[a][b] <= RG.data[a][b]);
+        use[a][b]++;
+        if (use[a][b] == static_cast<int>(RG.data[a][b] * 0.5)) flag++;
+        use[b][a]++;
+      } else {
         use[a][b]++;
         use[b][a]++;
       }
@@ -288,16 +321,17 @@ void solve() {
     line.clear();
 
     printnet_path(netid);
-
-
+    calcdelay(netid);
     // 清空生成树连边信息
     for (int i = 0; i < DieNum; i++) {
       G[i].clear();
     }
+    // calcdelay(netid);
     // Debug
     // return;
   }
-   adjustpath();
+  Assign_wire_info();
+  //  adjustpath();
 }
 
 void Init_Tree(int netid) {
@@ -379,37 +413,27 @@ void printnet_path(int netid) {
   }
   //  Debug
   // 输出 负载节点-- 路径 所经过的结点
-  std::unordered_map<int, std::vector<int>> tmp2;
+  // std::unordered_map<int, std::vector<int>> tmp2;
 
-  tmp2 = Net_Die_Path[netid];
+  // tmp2 = Net_Die_Path[netid];
 
-  std::cout << "print node ----  path" << std::endl;
-  for (auto &&it : tmp2) {
-    std::cout << it.first << "----";
+  // std::cout << "print node ----  path" << std::endl;
+  // for (auto &&it : tmp2) {
+  //   std::cout << it.first << "----";
 
-    for (auto &&v : it.second) {
-      std::cout << v << " ";
-    }
+  //   for (auto &&v : it.second) {
+  //     std::cout << v << " ";
+  //   }
 
-    std::cout << std::endl;
-  }
-  std::cout << "-----------------------------------------" << std::endl;
-
+  //   std::cout << std::endl;
+  // }
+  // std::cout << "-----------------------------------------" << std::endl;
 }
 
-// 后续需要改
+// 并查集find函数
+int find(int x) { return fa[x] == x ? x : fa[x] = find(fa[x]); }
+
 void Assign_wire_info() {
-  // for (auto &&it : RG.Not_Fpga_Die) {
-  //   int a = it.first;
-  //   int b = it.second;
-  //   // double tt= wiresig[a][b]*1.0/wiresig[b][a];
-  //   int ass_0 = RG.data[a][b] *
-  //               (1.0 * (wiresig[a][b]) / (wiresig[a][b] + wiresig[b][a]));
-  //   int ass_1 = RG.data[a][b] - ass_0;
-
-  //   // int p=
-  // }
-
   // 将一条wire上的所经过的net的 max vir val 排序    Glo
 
   for (auto &&it : Glo_Wire_Set) {
@@ -422,37 +446,214 @@ void Assign_wire_info() {
       int Netid = it2.first;
       double val = it2.second;
 
-      Net_on_Wire_SS.push_back(node{Netid, val});
+      Net_on_Wire_SS[{a, b}].push_back(node{Netid, val});
     }
   }
 
   // 将全局的每一条Wire的最大权值进行排序
-  sort(Net_on_Wire_SS.begin(), Net_on_Wire_SS.end(),
-       [](node a, node b) -> bool { return a.Max_Val > b.Max_Val; });
-
-  for (const std::pair<int, int> &it : Glo_Wire_Set) {
-    // wire的两端  Die的编号
+  for (auto &&it : Glo_Wire_Set) {
     int a = it.first;
-
     int b = it.second;
 
-    std::cout << "---" << std::endl;
+    sort(Net_on_Wire_SS[{a, b}].begin(), Net_on_Wire_SS[{a, b}].end(),
+         [](node a, node b) -> bool { return a.Max_Val > b.Max_Val; });
+  }
+  for (auto &it : RG.Not_Fpga_Die) {
+    int a = it.first;
+    int b = it.second;
+    // a,b 表示 wire的两端  Die的编号
+    if (Net_on_Wire_Max_Val[{a, b}].size() +
+            Net_on_Wire_Max_Val[{b, a}].size() ==
+        0)
+      continue;
 
-    /*
+    int all = Net_on_Wire_Max_Val[{a, b}].size() >>
+              2 + !(!(Net_on_Wire_Max_Val[{a, b}].size() & 3)) +
+                  Net_on_Wire_Max_Val[{b, a}].size() >>
+              2 + !(!(Net_on_Wire_Max_Val[{b, a}].size() & 3));
+
+    if (all <= RG.data[a][b]) {
+      int h = 0;
+      for (auto &&x : Net_on_Wire_Max_Val[{a, b}]) {
+        int netid = x.first;
+
+        Wire_Res[{a, b}][(h++) / 4 + 1].push_back(netid);
+      }
+
+      // 不能紧接着 因为 不同方向不能再同一条Wire
+      if (h % 4) {
+        h = ((h - 1) / 4 + 1) * 4;
+      }
+      for (auto &&x : Net_on_Wire_Max_Val[{b, a}]) {
+        int netid = x.first;
+
+        Wire_Res[{a, b}][(h++) / 4 + 1].push_back(netid);
+      }
+    } else {
+      // 正反向的 经过数量  数量越大应该越多分配
+      // 正反向的最大时延   最大时延越大应该越多分配
+
+      double rate = Net_on_Wire_Max_Val[{a, b}].size() *
+                    (*Net_on_Wire_SS[{a, b}].begin()).Max_Val /
+                    Net_on_Wire_Max_Val[{b, a}].size() *
+                    (*Net_on_Wire_SS[{b, a}].begin()).Max_Val;
+
+      int wire1 = static_cast<int>(RG.data[a][b] * rate);
+
+      int wire2 = RG.data[a][b] - wire1;
+      //--------------------------------------------------
+
+      // 清空临时的超限的集合
+      Tmp_S.clear();
+
+      // tuple   时延  组号  大小
+      std::priority_queue<std::tuple<double, int, int>,
+                          std::vector<std::tuple<double, int, int>>,
+                          std::greater<std::tuple<double, int, int>>>
+          Merge_q;
+
+      // 初始化并查集结点的fa
+      for (int i = 0;
+           i < static_cast<int>((Net_on_Wire_Max_Val[{a, b}].size() +
+                                 Net_on_Wire_Max_Val[{b, a}].size()) /
+                                    4 +
+                                4);
+           i++) {
+        fa[i] = i;
+      }
+
+      int h{0};
+
+      int idd{0};
+      for (auto &&x : Net_on_Wire_SS[{a, b}]) {
+        int netid = x.id;
+
+        if (h % 4 == 0) {
+          Merge_q.push({x.Max_Val, ++idd, 1});
+        }
+        Wire_Res[{a, b}][(h++) / 4 + 1].push_back(netid);
+      }
+      // int SZ = (int)Net_on_Wire_SS[{a, b}].size();
+      if (idd > wire1) {
+        // 比分配的wire1多下来的信号
+        // int last = SZ - (wire1*4-1) ;
+
+        while (!Merge_q.empty()) {
+          if (Merge_q.size() == wire1) break;
+          auto &t1 = Merge_q.top();
+          int id1 = std::get<1>(t1);
+          double val1 = std::get<0>(t1);
+          int siz1 = std::get<2>(t1);
+          Merge_q.pop();
+
+          auto &t2 = Merge_q.top();
+          int id2 = std::get<1>(t2);
+          double val2 = std::get<0>(t2);
+          int siz2 = std::get<2>(t2);
+
+          Merge_q.pop();
+
+          int x1 = find(id1);
+
+          int x2 = find(id2);
+
+          // 需要合并到Delay更大的那个节点上去
+          // 我们第一个 pop出来的肯定是目前最小的 所以更大的一定是第二个
+          int tmp_sz{0};
+          if (x1 != x2) {
+            fa[x1] = x2;
+
+            Extra_Delay_val[x2] += static_cast<double>(4.0 * siz1);
+
+            int tmp_sz = siz1 + siz2;
+
+            val2 += static_cast<double>(4.0 * siz1);
+          }
+
+          Merge_q.push(std::make_tuple(val2, x2, tmp_sz));
+        }
+      }
+     else{
+         
+        //如果重新分配线的方向后  正方向仍有剩余 就全部留给反方向
+        wire2= std::max( (wire1-idd)+wire2 , wire2) ;
+            
+        
+     }
 
 
+//  反方向的Wire----------------------------------------------------------------------------------------------------------------
+
+      // 初始化并查集结点的fa
+      for (int i = 0;
+           i < static_cast<int>((Net_on_Wire_Max_Val[{a, b}].size() +
+                                 Net_on_Wire_Max_Val[{b, a}].size()) /
+                                    4 +
+                                4);
+           i++) {
+        fa[i] = i;
+      }
 
 
+      //清空优先队列
+      while(!Merge_q.empty()){
+  
+        Merge_q.pop();
+      }
+           
 
+      h = wire1 * 4;
 
+      idd = wire1;
+      for (auto &&x : Net_on_Wire_SS[{b, a}]) {
+        int netid = x.id;
 
+        if (h % 4 == 0) {
+          Merge_q.push({x.Max_Val, ++idd, 1});
+        }
+        Wire_Res[{b, a}][(h++) / 4 + 1].push_back(netid);
+      }
+      // int SZ = (int)Net_on_Wire_SS[{b, a}].size();
+      if (idd > wire1 + wire2) {
+        // 比分配的wire1多下来的信号
+        // int last = SZ - (wire1*4-1) ;
 
+        while (!Merge_q.empty()) {
+          if (Merge_q.size() == wire2) break;
+          auto &t1 = Merge_q.top();
+          int id1 = std::get<1>(t1);
+          double val1 = std::get<0>(t1);
+          int siz1 = std::get<2>(t1);
+          Merge_q.pop();
 
+          auto &t2 = Merge_q.top();
+          int id2 = std::get<1>(t2);
+          double val2 = std::get<0>(t2);
+          int siz2 = std::get<2>(t2);
 
+          Merge_q.pop();
 
+          int x1 = find(id1);
 
+          int x2 = find(id2);
 
-    */
+          // 需要合并到Delay更大的那个节点上去
+          // 我们第一个 pop出来的肯定是目前最小的 所以更大的一定是第二个
+          int tmp_sz{0};
+          if (x1 != x2) {
+            fa[x1] = x2;
+
+            Extra_Delay_val[x2] += static_cast<double>(4.0 * siz1);
+
+            int tmp_sz = siz1 + siz2;
+
+            val2 += static_cast<double>(4.0 * siz1);
+          }
+
+          Merge_q.push(std::make_tuple(val2, x2, tmp_sz));
+        }
+      }
+    }
   }
 }
 
@@ -478,17 +679,18 @@ int calcdelay(int netid) {
         Tmp_Net_on_Wire_S.push_back({next1, next2});
 
         // 将该条Wire扔进全局的Wire集合
-        Glo_Wire_Set.push_back(std::make_pair(next1, next2));
+        Glo_Wire_Set.push_back({next1, next2});
 
-        Net_on_Wire[{next1, next2}][netid].push_back(id);
+        // Net_on_Wire[{next1, next2}][netid].push_back(id);
 
         // （2*x+1）/2   val% 4.5==0   首先按照只消耗了最低的delay考虑
         // 后续继续动态调整
         Delay_ans += 4.5;
       } else {
-        Delay_ans++;
+        Delay_ans += 1.0;
       }
     }
+    //  std::cout << Delay_ans << std::endl;
     RG.Task[netid][i].second = Delay_ans;
 
     // 这东西不用了 存在second 就行了
@@ -514,23 +716,40 @@ void adjustpath() {
   /*
 
   */
-  //Debug
+  // Debug
   // for (int i = 0; i < RG.DieNum; i++) {
   //   for (int j = 0; j < RG.DieNum; j++) {
   //     std::cout << use[i][j] << " ";
   //   }
   //   std::cout << std::endl;
   // }
-  for (int i = 0; i < RG.DieNum; i++) {
-      for (int j = i+1; j < RG.DieNum; j++) {
-         if(use[i][j]>RG.data[i][j]){
-           std::cout << "#" << i << " " << j << " " << use[i][j] - RG.data[i][j]<<std::endl;
-         }
-          
-      }
-      std::cout << std::endl;
-    }
+
+  // for (int i = 0; i < RG.DieNum; i++) {
+  //   for (int j = 0; j < RG.DieNum; j++) {
+  //     std::cout << RG.data[i][j] << " ";
+  //   }
+  //   std::cout << std::endl;
+  // }
+  // for (int i = 0; i < RG.DieNum; i++) {
+  //   for (int j = i + 1; j < RG.DieNum; j++) {
+  //     if(RG.DieToFpga_Map[i]!=RG.DieToFpga_Map[j])continue;
+  //     if (use[i][j] > RG.data[i][j]) {
+  //       std::cout << "#" << i << " " << j << " " << use[i][j] - RG.data[i][j]
+  //                 << std::endl;
+  //     }
+  //   }
+  //   std::cout << std::endl;
+  // }
 }
+
+void ADD_Path_extra_Delay(){
+
+   // 每一条路径再进行优先队列合并的时候会有额外时延 需要增加到每一条路径上
+
+}
+
+
+
 
 void Print_Layout_Res() {
   std::ofstream outputFile("./design.route.out");
@@ -549,6 +768,7 @@ void Print_Layout_Res() {
            [](std::pair<int, double> a, std::pair<int, double> b) -> bool {
              return a.second > b.second;
            });
+
       // 保存一下使用过的netid
       Net_Max_Delay.push_back({it.first, outve[0].second});
 
@@ -564,7 +784,7 @@ void Print_Layout_Res() {
          });
 
     // it.first为netid
-    for (const std::pair<int, int> &it : Net_Max_Delay) {
+    for (const std::pair<int, double> &it : Net_Max_Delay) {
       // 输出netid
       outputFile << "[" << it.first << "]" << std::endl;
 
@@ -580,7 +800,12 @@ void Print_Layout_Res() {
           }
         }
         outputFile << '[';
-        outputFile << it.second;
+        double tmp=it.second;
+        if(tmp!=(int)tmp)
+        outputFile << std::fixed << std::setprecision(1) << it.second;
+        else{
+          outputFile << (int)it.second;
+        }
         outputFile << ']' << std::endl;
       }
     }
@@ -596,30 +821,50 @@ void Print_Tdm_Res() {
   std::ofstream outputFile("./design.tdm.out");
 
   if (outputFile.is_open()) {
-    for (const auto &pi : Glo_Wire_Set) {
-      int cur1 = pi.first;
-      int cur2 = pi.second;
+    // outputFile << '[Die' << cur1 << ",Die" << cur2 << ']' << std::endl;
 
-      outputFile << '[Die' << cur1 << ",Die" << cur2 << ']' << std::endl;
+    for (auto &it : RG.Not_Fpga_Die) {
+      int a = it.first;
+      int b = it.second;
+      // a,b 表示 wire的两端  Die的编号
+      if (Net_on_Wire_Max_Val[{a, b}].size() +
+              Net_on_Wire_Max_Val[{b, a}].size() ==
+          0)
+        continue;
+      outputFile << "[Die" << a << ",Die" << b << ']' << std::endl;
 
-      // 输出所经过的net [net1,net2,net3,......]   TDM Rdtio
-      /*
+      for (auto &it2 : Wire_Res[{a, b}]) {
+        outputFile << '[';
+        for (auto &it3 : it2.second) {
+          if (it3 != it2.second.back())
+            outputFile << it3 + Extra_Delay_val[it2.first]  <<  ',';
+          else
+            outputFile << it3 + Extra_Delay_val[it2.first] <<  ']';
+        }
+        outputFile << " " << (it2.second.size() + 3) / 4 * 4 << std::endl;
+      }
 
+      // int all = Net_on_Wire_Max_Val[{a, b}].size() >>
+      //           2 + !(!(Net_on_Wire_Max_Val[{a, b}].size() & 3)) +
+      //               Net_on_Wire_Max_Val[{b, a}].size() >>
+      //           2 + !(!(Net_on_Wire_Max_Val[{b, a}].size() & 3));
 
+      // if (all <= RG.data[a][b]) {
+      //   int h = 0;
+      //   for (auto &&x : Net_on_Wire_Max_Val[{a, b}]) {
+      //     int netid = x.first;
 
+      //     Wire_Res[{a, b}][(h++) / 4 + 1].push_back(netid);
+      //   }
 
-
-
-
-
-
-
-
-
-
-
-
-      */
+      //   if (h % 4) {
+      //     h = ((h - 1) / 4 + 1) * 4;
+      //   }
+      //   for (auto &&x : Net_on_Wire_Max_Val[{b, a}]) {
+      //     int netid = x.first;
+      //     Wire_Res[{b, a}][(h++) / 4 + 1].push_back(netid);
+      //   }
+      // }
     }
 
     outputFile.close();

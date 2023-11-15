@@ -5,14 +5,14 @@
 #include "_readdata.h"
 #include "graphinit.h"
 
-#define RG ReadDataSource ::getInstance()
-
 int main() {
   solve();
+
+  Print_Layout_Res();
+  Print_Tdm_Res();
   // 基准测试
 
   /*
-
 
 
   */

@@ -23,8 +23,6 @@ class ReadDataSource {
   // 不在同一个FPGA且有连线的Die
   std::vector<std::pair<int,int>>Not_Fpga_Die;
 
-  // 连线数据的备份
-  std::vector<std::vector<int>> datatmp;
   // 最大的Die间SLL
   int Max_SLL;
   // Die间的连接信息

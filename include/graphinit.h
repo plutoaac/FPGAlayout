@@ -2,7 +2,7 @@
 
 #include "_readdata.h"
 
-constexpr int V = 25;
+constexpr int V = 22;
 
 constexpr int E = 1000;
 
@@ -44,4 +44,5 @@ void Assign_wire_info();
 void Print_Layout_Res();
 //输出TDM分配结果
 void Print_Tdm_Res();
-
+// 为每一组条路径增加额外的Delay
+void Add_Path_extra_Delay();

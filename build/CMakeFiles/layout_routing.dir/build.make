@@ -73,43 +73,43 @@ CMakeFiles/layout_routing.dir/src/_readdata.cpp.o: CMakeFiles/layout_routing.dir
 CMakeFiles/layout_routing.dir/src/_readdata.cpp.o: ../src/_readdata.cpp
 CMakeFiles/layout_routing.dir/src/_readdata.cpp.o: CMakeFiles/layout_routing.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/hxm/桌面/test1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/layout_routing.dir/src/_readdata.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/layout_routing.dir/src/_readdata.cpp.o -MF CMakeFiles/layout_routing.dir/src/_readdata.cpp.o.d -o CMakeFiles/layout_routing.dir/src/_readdata.cpp.o -c /home/hxm/桌面/test1/src/_readdata.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/layout_routing.dir/src/_readdata.cpp.o -MF CMakeFiles/layout_routing.dir/src/_readdata.cpp.o.d -o CMakeFiles/layout_routing.dir/src/_readdata.cpp.o -c /home/hxm/桌面/test1/src/_readdata.cpp
 
 CMakeFiles/layout_routing.dir/src/_readdata.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/layout_routing.dir/src/_readdata.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/hxm/桌面/test1/src/_readdata.cpp > CMakeFiles/layout_routing.dir/src/_readdata.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/hxm/桌面/test1/src/_readdata.cpp > CMakeFiles/layout_routing.dir/src/_readdata.cpp.i
 
 CMakeFiles/layout_routing.dir/src/_readdata.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/layout_routing.dir/src/_readdata.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hxm/桌面/test1/src/_readdata.cpp -o CMakeFiles/layout_routing.dir/src/_readdata.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hxm/桌面/test1/src/_readdata.cpp -o CMakeFiles/layout_routing.dir/src/_readdata.cpp.s
 
 CMakeFiles/layout_routing.dir/src/graphinit.cpp.o: CMakeFiles/layout_routing.dir/flags.make
 CMakeFiles/layout_routing.dir/src/graphinit.cpp.o: ../src/graphinit.cpp
 CMakeFiles/layout_routing.dir/src/graphinit.cpp.o: CMakeFiles/layout_routing.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/hxm/桌面/test1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/layout_routing.dir/src/graphinit.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/layout_routing.dir/src/graphinit.cpp.o -MF CMakeFiles/layout_routing.dir/src/graphinit.cpp.o.d -o CMakeFiles/layout_routing.dir/src/graphinit.cpp.o -c /home/hxm/桌面/test1/src/graphinit.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/layout_routing.dir/src/graphinit.cpp.o -MF CMakeFiles/layout_routing.dir/src/graphinit.cpp.o.d -o CMakeFiles/layout_routing.dir/src/graphinit.cpp.o -c /home/hxm/桌面/test1/src/graphinit.cpp
 
 CMakeFiles/layout_routing.dir/src/graphinit.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/layout_routing.dir/src/graphinit.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/hxm/桌面/test1/src/graphinit.cpp > CMakeFiles/layout_routing.dir/src/graphinit.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/hxm/桌面/test1/src/graphinit.cpp > CMakeFiles/layout_routing.dir/src/graphinit.cpp.i
 
 CMakeFiles/layout_routing.dir/src/graphinit.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/layout_routing.dir/src/graphinit.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hxm/桌面/test1/src/graphinit.cpp -o CMakeFiles/layout_routing.dir/src/graphinit.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hxm/桌面/test1/src/graphinit.cpp -o CMakeFiles/layout_routing.dir/src/graphinit.cpp.s
 
 CMakeFiles/layout_routing.dir/src/main.cpp.o: CMakeFiles/layout_routing.dir/flags.make
 CMakeFiles/layout_routing.dir/src/main.cpp.o: ../src/main.cpp
 CMakeFiles/layout_routing.dir/src/main.cpp.o: CMakeFiles/layout_routing.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/hxm/桌面/test1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/layout_routing.dir/src/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/layout_routing.dir/src/main.cpp.o -MF CMakeFiles/layout_routing.dir/src/main.cpp.o.d -o CMakeFiles/layout_routing.dir/src/main.cpp.o -c /home/hxm/桌面/test1/src/main.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/layout_routing.dir/src/main.cpp.o -MF CMakeFiles/layout_routing.dir/src/main.cpp.o.d -o CMakeFiles/layout_routing.dir/src/main.cpp.o -c /home/hxm/桌面/test1/src/main.cpp
 
 CMakeFiles/layout_routing.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/layout_routing.dir/src/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/hxm/桌面/test1/src/main.cpp > CMakeFiles/layout_routing.dir/src/main.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/hxm/桌面/test1/src/main.cpp > CMakeFiles/layout_routing.dir/src/main.cpp.i
 
 CMakeFiles/layout_routing.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/layout_routing.dir/src/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hxm/桌面/test1/src/main.cpp -o CMakeFiles/layout_routing.dir/src/main.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/hxm/桌面/test1/src/main.cpp -o CMakeFiles/layout_routing.dir/src/main.cpp.s
 
 # Object files for target layout_routing
 layout_routing_OBJECTS = \

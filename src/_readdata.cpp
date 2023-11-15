@@ -188,7 +188,7 @@ bool ReadDataSource::_read_die_network() {
       row.push_back(number);
     }
     data.push_back(row);
-    datatmp.push_back(row);
+   
   }
   DieNum = data[0].size();
   inputFile.close();

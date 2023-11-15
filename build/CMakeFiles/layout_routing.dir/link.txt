@@ -1,1 +1,1 @@
-/usr/bin/c++ -g CMakeFiles/layout_routing.dir/src/_readdata.cpp.o CMakeFiles/layout_routing.dir/src/graphinit.cpp.o CMakeFiles/layout_routing.dir/src/main.cpp.o -o layout_routing 
+/usr/bin/g++ -g CMakeFiles/layout_routing.dir/src/_readdata.cpp.o CMakeFiles/layout_routing.dir/src/graphinit.cpp.o CMakeFiles/layout_routing.dir/src/main.cpp.o -o layout_routing 
