@@ -46,3 +46,6 @@ void Print_Layout_Res();
 void Print_Tdm_Res();
 // 为每一组条路径增加额外的Delay
 void Add_Path_extra_Delay();
+//并查集find函数
+int find(int x);
+int Find(int x);
