@@ -40,10 +40,12 @@ bool ReadDataSource::_readnet() {
 
         DriverId = num;
 
-        Task[netid].push_back({DriverId,0});
+        Task[netid].push_back({DriverId, 0});
+      
 
       } else {
-        Task[netid].push_back({num,0});
+        Task[netid].push_back({num, 0});
+      
       }
       // Debug
       // std::cout << line << std::endl;
@@ -188,7 +190,6 @@ bool ReadDataSource::_read_die_network() {
       row.push_back(number);
     }
     data.push_back(row);
-   
   }
   DieNum = data[0].size();
   inputFile.close();
@@ -203,8 +204,8 @@ int ReadDataSource::get_MaxSLL() {
       // std::cout << number << " ";
       if (DieToFpga_Map[i] == DieToFpga_Map[j])
         Curmax = std::max(Curmax, data[i][j]);
-      else{
-        Not_Fpga_Die.push_back({i,j});
+      else {
+        Not_Fpga_Die.push_back({i, j});
       }
     }
     // std::cout << std::endl;

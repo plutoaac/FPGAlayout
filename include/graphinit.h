@@ -49,3 +49,11 @@ void Add_Path_extra_Delay();
 //并查集find函数
 int find(int x);
 int Find(int x);
+//建立DFS树
+void Build_Dfs_Tree(int netid, int u,int fa);
+//计算每一个负载的delay
+void calc_load_delay();
+
+
+
+
