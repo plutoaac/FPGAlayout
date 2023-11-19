@@ -19,7 +19,7 @@
 
 #define RG ReadDataSource ::getInstance()
 
-#define __TIMIT 3
+#define __TIMIT 5
 
 using ll = long long;
 
@@ -231,7 +231,7 @@ void Add_Edge(int u, int v, int c) {
 int Edge_Val(int CurNum) {
   // Debug
 
-  if (flag <= __TIMIT || !flag1) return 8;
+  if (flag <= __TIMIT || !flag1) return CurNum + 2;
 
   return 1;
   // return -1 * CurNum + ReadDataSource::getInstance().Max_SLL + 2;
@@ -239,12 +239,12 @@ int Edge_Val(int CurNum) {
 
 // 记住改写
 int Wire_Val(int CurNum) {
-  if (flag <= __TIMIT || !flag1) return 1;
-  // if (flag <= __TIMIT || !flag1) return 20340 - static_cast<int>(CurNum) *
+  //  if (flag <= __TIMIT || !flag1) return 1;
+  if (flag <= __TIMIT || !flag1) return 20340 - static_cast<int>(CurNum) * 0.2;
   //  0.2; 0.6;
   //   0.6;
 
-  return 4;
+  return 2;
 }
 
 int Set_DieNum() { DieNum = RG.DieNum; }
