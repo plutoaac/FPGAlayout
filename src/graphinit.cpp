@@ -329,9 +329,10 @@ void solve() {
         for (int j = i + 1; j < DieNum; j++) {
           if (RG.data[i][j] == 0) continue;
           if (use[i][j] == RG.data[i][j]) continue;
-          if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j])
+          if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j]) {
+            if (use[i][j] == RG.data[i][j]) continue;
             ee.push_back({Edge_Val(use[i][j]), i, j});
-          else {
+          } else {
             ee.push_back({Wire_Val(use[i][j]), i, j});
           }
         }
@@ -369,8 +370,9 @@ void solve() {
           if (RG.data[i][j] == 0) continue;  // 不连通则跳出
           // 在同一个fpga
           assert(use[i][j] == use[j][i]);
-          if (use[i][j] == RG.data[i][j]) continue;
+
           if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j]) {
+            if (use[i][j] == RG.data[i][j]) continue;
             Add_Edge(i, j, Edge_Val(use[i][j]));
             Add_Edge(j, i, Edge_Val(use[j][i]));
             //  std::cout<<cnt1-1<<" "<<i<<" "<<j<<std::endl;
@@ -1081,7 +1083,7 @@ void Print_Layout_Res() {
         // Net_Die_Path[it][id]
         int nodetmp;
         int loader = ii.first;
-          
+
         if (Net_Die_Path[netid][loader].back() !=
             *Net_Die_Path[netid][loader].begin()) {
           for (const auto node : Net_Die_Path[netid][loader]) {
