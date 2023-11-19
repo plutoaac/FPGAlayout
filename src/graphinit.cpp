@@ -19,7 +19,7 @@
 
 #define RG ReadDataSource ::getInstance()
 
-#define __TIMIT 4
+#define __TIMIT 3
 
 using ll = long long;
 
@@ -231,16 +231,20 @@ void Add_Edge(int u, int v, int c) {
 int Edge_Val(int CurNum) {
   // Debug
 
-  if (flag <= __TIMIT || flag1) return CurNum + 1;
-  return 5;
+  if (flag <= __TIMIT || !flag1) return 8;
+
+  return 1;
   // return -1 * CurNum + ReadDataSource::getInstance().Max_SLL + 2;
 }
 
 // 记住改写
 int Wire_Val(int CurNum) {
-  if (flag <= __TIMIT || flag1) return 20340 - static_cast<int>(CurNum) * 0.2;
+  if (flag <= __TIMIT || !flag1) return 1;
+  // if (flag <= __TIMIT || !flag1) return 20340 - static_cast<int>(CurNum) *
+  //  0.2; 0.6;
+  //   0.6;
 
-  return 1;
+  return 4;
 }
 
 int Set_DieNum() { DieNum = RG.DieNum; }
@@ -324,6 +328,7 @@ void solve() {
       for (int i = 0; i < DieNum; i++) {
         for (int j = i + 1; j < DieNum; j++) {
           if (RG.data[i][j] == 0) continue;
+          if (use[i][j] == RG.data[i][j]) continue;
           if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j])
             ee.push_back({Edge_Val(use[i][j]), i, j});
           else {
@@ -364,6 +369,7 @@ void solve() {
           if (RG.data[i][j] == 0) continue;  // 不连通则跳出
           // 在同一个fpga
           assert(use[i][j] == use[j][i]);
+          if (use[i][j] == RG.data[i][j]) continue;
           if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j]) {
             Add_Edge(i, j, Edge_Val(use[i][j]));
             Add_Edge(j, i, Edge_Val(use[j][i]));
@@ -522,18 +528,12 @@ void printnet_path(int netid) {
           if (use[u][v] >= RG.data[u][v] * 0.5) {
             flag++;
           }
-          if (use[u][v] >= RG.data[u][v] * 0.75) {
+          if (use[u][v] >= RG.data[u][v] * 0.85) {
             flag1++;
           }
         } else {
           use[v][u]++;
           use[u][v]++;
-          if (use[u][v] >= RG.data[u][v] * 0.5) {
-            flag++;
-          }
-          if (use[u][v] >= RG.data[u][v] * 0.75) {
-            flag1++;
-          }
         }
 
         for (auto &it : Net_DieToNode[netid][v]) {
@@ -702,7 +702,8 @@ void Assign_wire_info() {
     int sz1, sz1_, sz2, sz2_;
     cur_cnt = 0;
 
-    std::cout << "size" << Merge_q1.size() << " " << Merge_q2.size()<< std::endl;
+    // std::cout << "size" << Merge_q1.size() << " " << Merge_q2.size()
+    //           << std::endl;
     while ((Merge_q1.size() >= 2 || flag1 == 1) &&
            (Merge_q2.size() >= 2 || flag2 == 1)) {
       if (flag1 == 0) {
@@ -840,13 +841,13 @@ void Assign_wire_info() {
     // std::cout << Merge_q1.size() + Merge_q2.size() << std::endl;
     while (!Merge_q1.empty()) {
       auto t = Merge_q1.top();
-      std::cout << t.sz << std::endl;
+      //  std::cout << t.sz << std::endl;
       Merge_q1.pop();
     }
 
     while (!Merge_q2.empty()) {
       auto t = Merge_q2.top();
-      std::cout << t.sz << std::endl;
+      // std::cout << t.sz << std::endl;
       Merge_q2.pop();
     }
     for (int i = 1; i <= idd; i++) {
@@ -859,7 +860,6 @@ void Assign_wire_info() {
       else
         Merge_S[a].push_back({i, 1});
     }
-
 
     for (int i = 1; i <= idd; i++) {
       int t = find(i);
@@ -883,14 +883,14 @@ void Assign_wire_info() {
             }
           }
         }
-        int extra_val = (anspri.size()+3)/4 - 1;
+        int extra_val = (anspri.size() + 3) / 4 - 1;
         if (!ff) {
           for (auto x : anspri) {
             Sgt_Trees[x].change(1, l[x][b], r[x][b], extra_val * 4);
           }
         } else {
-          for(auto x:anspri)
-          Sgt_Trees[x].change(1, l[x][a], r[x][a], extra_val * 4);
+          for (auto x : anspri)
+            Sgt_Trees[x].change(1, l[x][a], r[x][a], extra_val * 4);
         }
       }
     }
@@ -1002,7 +1002,7 @@ void adjustpath() {
     }
     std::cout << std::endl;
   }
-
+  std::cout << "*******************************" << std::endl;
   for (int i = 0; i < RG.DieNum; i++) {
     for (int j = 0; j < RG.DieNum; j++) {
       std::cout << RG.data[i][j] << " ";
@@ -1081,7 +1081,7 @@ void Print_Layout_Res() {
         // Net_Die_Path[it][id]
         int nodetmp;
         int loader = ii.first;
-
+          
         if (Net_Die_Path[netid][loader].back() !=
             *Net_Die_Path[netid][loader].begin()) {
           for (const auto node : Net_Die_Path[netid][loader]) {
