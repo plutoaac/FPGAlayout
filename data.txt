@@ -1,0 +1,20 @@
+
+limit  4
+int Edge_Val(int CurNum) {
+  if (flag <= __TIMIT || !flag1) return CurNum + 2;
+  return 1;
+}
+int Wire_Val(int CurNum) { 
+  if (flag <= __TIMIT || !flag1) return 20340 - static_cast<int>(CurNum) * 0.2;
+  return 2;
+}
+
+case 2 10.5 
+case 3  12.5
+case 4  35.5
+case 5 220
+case 6   13539    
+case 7 897.5
+case 8 909
+case 9 
+case 10

@@ -5,7 +5,6 @@
 constexpr int V = 22;
 
 constexpr int E = 1000;
-
 // extern int h[V], e[E], ne[E], w[E];
 // extern int cnt1;
 // extern int vis[V];
@@ -36,16 +35,12 @@ void adjustpath();
 void Init_Tree(int netid);
 // Die的数量
 int Set_DieNum();
-// 计算通过的是SLL的时延
-int Get_Sll_Delay();
 //分配wire信息（***方向）
 void Assign_wire_info();
 //输出布线结果
 void Print_Layout_Res();
 //输出TDM分配结果
 void Print_Tdm_Res();
-// 为每一组条路径增加额外的Delay
-void Add_Path_extra_Delay();
 //并查集find函数
 int find(int x);
 int Find(int x);

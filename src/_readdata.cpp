@@ -41,14 +41,10 @@ bool ReadDataSource::_readnet() {
         DriverId = num;
 
         Task[netid].push_back({DriverId, 0});
-      
 
       } else {
         Task[netid].push_back({num, 0});
-      
       }
-      // Debug
-      // std::cout << line << std::endl;
       lineid++;
     }
     inputFile.close();
@@ -83,8 +79,6 @@ bool ReadDataSource::_read_die_position() {
 
           NodeToDie_Map[cnt] = Dieidx;
 
-          DieToNode[Dieidx].insert(cnt);
-
           tmp.clear();
 
           continue;
@@ -93,8 +87,6 @@ bool ReadDataSource::_read_die_position() {
           int cnt = std::stoi(tmp.c_str());
 
           NodeToDie_Map[cnt] = Dieidx;
-
-          DieToNode[Dieidx].insert(cnt);
 
           tmp.clear();
 
@@ -105,12 +97,6 @@ bool ReadDataSource::_read_die_position() {
           tmp = tmp + line[i];
         }
       }
-      // Debug
-      //  int cnt = std::stoi(tmp.c_str());
-      //  NodeToDie_Map[cnt] = Dieidx;
-      //  DieToNode[Dieidx].insert(cnt);
-      //  Debug
-      //  std::cout << line << std::endl;
     }
 
     inputFile.close();
@@ -140,8 +126,6 @@ bool ReadDataSource::_read_fpga() {
 
           DieToFpga_Map[cnt] = Fpgaidx;
 
-          FpgaToDie[Fpgaidx].insert(cnt);
-
           tmp.clear();
 
           continue;
@@ -155,8 +139,6 @@ bool ReadDataSource::_read_fpga() {
       int cnt = std::stoi(tmp.c_str());
 
       DieToFpga_Map[cnt] = Fpgaidx;
-
-      FpgaToDie[Fpgaidx].insert(cnt);
       //  DieToFpga_Map
       // Debug
       // std::cout << line << std::endl;

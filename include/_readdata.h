@@ -11,7 +11,6 @@ class ReadDataSource {
  public:
   static ReadDataSource &getInstance() { return readDataSource; }
   ReadDataSource(int x) {
-    // Task.reserve(1000);
     Max_SLL = x;
     _read_die_network();
     _read_die_position();
@@ -19,48 +18,32 @@ class ReadDataSource {
     _read_fpga();
     Max_SLL = get_MaxSLL();
   }
-
-  // 不在同一个FPGA且有连线的Die
-  std::vector<std::pair<int,int>>Not_Fpga_Die;
-
+  // Wire
+  std::vector<std::pair<int, int>> Not_Fpga_Die;
   // 最大的Die间SLL
   int Max_SLL;
   // Die间的连接信息
   std::vector<std::vector<int>> data;
   int DieNum{0};
-  // FPGA  所包含的Die
-  std::unordered_set<int> FpgaToDie[4];
   // Die 到fpga的映射 每一个Die属于哪个FPGA
   std::unordered_map<int, int> DieToFpga_Map;
-  // Die 所包含的驱动以及负载节点
-  std::unordered_set<int> DieToNode[20];
   // 结点到Die的映射 每一个结点属于哪个Die
   std::unordered_map<int, int> NodeToDie_Map;
   // 驱动节点的数量
   int DriverNum = 0;
   // 求解的每一组net 驱动到负载结点
-  std::unordered_map<int, std::vector<std::pair<int,double>>> Task;
-  
+  std::unordered_map<int, std::vector<std::pair<int, double>>> Task;
   // 读入design.net文件
   bool _readnet();
-
-
-
   // 读入design.die.position文件
   bool _read_die_position();
-
   // 读入design.dir.network 文件
   bool _read_die_network();
-
   // 读入design.fpga.die文件
   bool _read_fpga();
-
   // 求最大的DIE间SLL
   int get_MaxSLL();
-
-
   ~ReadDataSource() = default;
-
   static ReadDataSource readDataSource;
   ReadDataSource(const ReadDataSource &) = delete;
   ReadDataSource &operator=(const ReadDataSource &) = delete;
