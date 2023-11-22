@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+
 using namespace std;
 
 #define pii pair<int, int>
@@ -10,9 +11,13 @@ int wire4;
 int a[5];
 vector<string> ss;
 std::map<pii, pair<int, int>> mpp1;
-
+int ma = 0;
 std::map<int, std::map<pii, int>> mpp;
 int x, y;
+std::map<int, int> mp;
+set<pair<int, int>> mp1[10000010];
+map<int, vector<pair<int, int>>> vv;
+set<int> v1;
 // Die 到fpga的映射 每一个Die属于哪个FPGA
 std::map<int, int> DieToFpga_Map;
 int main() {
@@ -60,6 +65,7 @@ int main() {
       }
 
       int val = atoi(t.c_str());
+      ma = max(ma, val);
       // cout<<val<<endl;
       t.clear();
 
@@ -68,10 +74,15 @@ int main() {
         if (line[i] == ',' || line[i] == ']') {
           netid = atoi(ss.c_str());
           // cout<<netid <<x<<" "<<y<<" "<<val<<endl;
-          if (!fff)
+          if (!fff) {
             mpp[netid][{x, y}] = val;
-          else
+            mp[netid]++;
+            vv[netid].push_back({x, y});
+          } else {
             mpp[netid][{y, x}] = val;
+            mp[netid]++;
+            vv[netid].push_back({y, x});
+          }
           ss.clear();
           continue;
         }
@@ -131,7 +142,6 @@ int main() {
       int tmpidx;
       for (int i = 1; i < line.size(); i++) {
         if (line[i] == ']') {
-
           ans.push_back(atoi(tmp.c_str()));
           tmp.clear();
           tmpidx = i;
@@ -151,16 +161,17 @@ int main() {
 
       int flag = 0;
       // cout << ans.size() << endl;
+      double ma = 0;
       if (ans.size() >= 1) {
         for (int i = 1; i < ans.size(); i++) {
           if (mpp[netid][{ans[i - 1], ans[i]}] == 0)
             Delay += 1.0;
-          else
-            flag++, Delay += 1.0 * (mpp[netid][{ans[i - 1], ans[i]}]);
+          else {
+            flag++, mp1[netid].insert({ans[i - 1], ans[i]}),
+                Delay += 1.0 * (mpp[netid][{ans[i - 1], ans[i]}]);
+          }
         }
-      } else {
       }
-
       for (int i = tmpidx + 2; i < line.size() - 1; i++) {
         // cout << line[i] << " ";
         tmp += line[i];
@@ -171,15 +182,28 @@ int main() {
       tmp.clear();
       if (flag) Delay += flag * 0.5;
       // cout << Delay << " " << DD << endl;
+      // cout << mp[netid] << " " << mp1[netid].size() << endl;
+      v1.insert(netid);
+      if (Delay != DD) {
+        cout << Delay << " " << DD << endl;
+      }
       assert(Delay == DD);
-   
     }
-    cout<<"okk"<<endl;
-
+    cout << "okk" << endl;
   } else {
     cout << "failed" << endl;
   }
+  for (auto netid : v1) {
+    if (mp[netid] != mp1[netid].size()) {
+      cout << netid << endl;
+      cout << mp[netid] << " " << mp1[netid].size() << endl;
+      for (auto it : vv[netid]) {
+        cout << it.first << " " << it.second << endl;
+      }
+    }
+    assert(mp[netid] == mp1[netid].size());
+  }
 
-
+  std::cout << ma << std::endl;
   cout << endl;
 }

@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <iostream>
 #include <queue>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -85,9 +86,6 @@ std::unordered_map<int, std::unordered_map<int, std::vector<int>>>
 // 临时Wire的集合 （考虑方向） BFS树不可能有重边
 std::vector<std::pair<int, int>> Tmp_Net_on_Wire_S;
 
-// 全局的Wire集合
-std::vector<std::pair<int, int>> Glo_Wire_Set;
-
 // 每一组Net的最大时延
 std::vector<std::pair<int, double>> Net_Max_Delay;
 
@@ -113,6 +111,7 @@ std::unordered_map<int, std::map<int, int>> l;
 std::unordered_map<int, std::map<int, int>> r;
 std::unordered_map<int, std::map<int, int>> id;
 std::unordered_map<int, std::map<int, int>> wt;
+std::unordered_map<int, std::map<int, int>> st1;
 
 int idx{0};
 
@@ -129,6 +128,11 @@ struct pri_node {
   double ma{0};
   int zuhao;
   int sz;
+  pri_node(double a = 0, int b = 0, int c = 0) {
+    ma = a;
+    zuhao = b;
+    sz = c;
+  }
 };
 
 struct CompareDelay {
@@ -148,16 +152,22 @@ struct SGT {
     double maxv{0};
 #define ls i * 2
 #define rs i * 2 + 1
+    node(int l_ = 0, int r_ = 0, double sum_ = 0, double maxv_ = 0) {
+      l = l_;
+      r = r_;
+      sum = sum_;
+      maxv = maxv_;
+    }
   } tr[22 * 4];
   // 需要改
-  std::map<int, double> a;
+  std::unordered_map<int, double> a;
   // push操作维护
   void pushup(int i) {
     tr[i].sum = tr[ls].sum + tr[rs].sum;
     tr[i].maxv = std::max(tr[ls].maxv, tr[rs].maxv);
   }
   void build(int i, int l, int r) {
-    tr[i] = {l, r, 0.0, 0.0};
+    tr[i] = {l, r};
     if (l == r) {
       tr[i].sum = a[l];
       return;
@@ -204,6 +214,8 @@ struct SGT {
 // 存储每一个线段树
 std::map<int, SGT> Sgt_Trees;
 
+std::unordered_set<int> Se[V];
+
 // 合并TDM结束后的每一组    pair存储他是正向的还是反向的
 std::unordered_map<int, std::vector<std::pair<int, int>>> Merge_S;
 
@@ -232,17 +244,18 @@ void Add_Edge(int u, int v, int c) {
 int Edge_Val(int CurNum) {
   // Debug
 
-  if (flag <= __TIMIT || !flag1) return CurNum + 2;
+  // if (flag <= __TIMIT || !flag1) return CurNum + 2;
 
-  return 1;
+  return 4;
 }
 
 // 记住改写
 int Wire_Val(int CurNum) {
   //  if (flag <= __TIMIT || !flag1) return 1;
-  if (flag <= __TIMIT || !flag1) return 20340 - static_cast<int>(CurNum) * 0.2;
+  // if (flag <= __TIMIT || !flag1) return 20340 - static_cast<int>(CurNum) *
+  // 0.2;
 
-  return 4;
+  return 1;
 }
 
 int Set_DieNum() { DieNum = RG.DieNum; }
@@ -280,7 +293,7 @@ void printedge(int u, int A) {
     line.push_back((pre[u][A][2]) >> 1);
 
     // 进行重新构图
-
+    // std::cout << fro[pre[u][A][2]] << " " << e[pre[u][A][2]] << std::endl;
     G[fro[pre[u][A][2]]].push_back(e[pre[u][A][2]]);
 
     G[e[pre[u][A][2]]].push_back(fro[pre[u][A][2]]);
@@ -297,14 +310,80 @@ void printedge(int u, int A) {
     printedge(u, pre[u][A][2]);
   }
 }
+std::unordered_map<int, int> fangwen;
+void printedge1(int u, int A) {
+  // DebuG
+  //  std::cout << "op u  A" << pre[u][A][0] << u << " " << A << std::endl;
+
+  if (pre[u][A][0] == 1) {
+    // 进行重新构图
+    //  std::cout << fro[pre[u][A][2]] << " " << e[pre[u][A][2]] << std::endl;
+    fangwen[fro[pre[u][A][2]]] = 1;
+    fangwen[e[pre[u][A][2]]] = 1;
+
+    Se[fro[pre[u][A][2]]].insert(e[pre[u][A][2]]);
+
+    Se[e[pre[u][A][2]]].insert(fro[pre[u][A][2]]);
+    // Debug
+    // std::cout << fro[pre[u][A][2]] << " " << e[pre[u][A][2]] << std::endl;
+    // std::cout << "-------------------" << std::endl;
+
+    printedge1(pre[u][A][1], A);
+  }
+
+  if (pre[u][A][0] == 2) {
+    printedge1(u, pre[u][A][1]);
+
+    printedge1(u, pre[u][A][2]);
+  }
+}
+std::unordered_map<int, int> guanjiandian;
+void printedge2(int u, int A) {
+  // DebuG
+  //  std::cout << "op u  A" << pre[u][A][0] << u << " " << A << std::endl;
+
+  if (pre[u][A][0] == 1) {
+    // 进行重新构图
+    // std::cout << fro[pre[u][A][2]] << " " << e[pre[u][A][2]] << std::endl;
+    guanjiandian[fro[pre[u][A][2]]] = 1;
+    guanjiandian[e[pre[u][A][2]]] = 1;
+    Se[fro[pre[u][A][2]]].insert(e[pre[u][A][2]]);
+
+    Se[e[pre[u][A][2]]].insert(fro[pre[u][A][2]]);
+    // Debug
+    // std::cout << fro[pre[u][A][2]] << " " << e[pre[u][A][2]] << std::endl;
+    // std::cout << "-------------------" << std::endl;
+
+    printedge2(pre[u][A][1], A);
+  }
+
+  if (pre[u][A][0] == 2) {
+    printedge2(u, pre[u][A][1]);
+
+    printedge2(u, pre[u][A][2]);
+  }
+}
+std::vector<int> vv;
 void solve() {
   Set_DieNum();
-
-  for (auto net : RG.Task) {
+  int cn = 0;
+  // for (auto net : RG.Tmp) {
+  //   ++cn;
+  // }
+  // std::cout << cn << std::endl;
+  // return;
+  for (auto net : RG.Tmp) {
     Init_Graph();
 
     int netid = net.first;
+    std::cout << ++cn << std::endl;
+    std::cout << netid << " " << std::endl;
+    std::cout << "----" << std::endl;
+    // std::ofstream outputFile1("./design.MAX.out");
+    // outputFile1 << netid << std::endl;
+    // outputFile1.close();
     std::vector<int> key;
+    std::unordered_map<int, int> ke;
 
     int vis[22] = {0};
 
@@ -313,11 +392,78 @@ void solve() {
     }
 
     for (int i = 0; i < DieNum; ++i) {
-      if (vis[i]) key.push_back(i);
+      if (vis[i]) ke[i] = 1;
     }
-    if (key.size() == DieNum) {
+    for (auto it : ke) {
+      key.push_back(it.first);
+    }
+
+    if (key.size() == 2) {
+      std::cout << "liangge" << std::endl;
+      //  std::cout << key[0] << " " << key[1] << std::endl;
+      int liantong = 0;
+
+      std::vector<int> tm;
+      tm.push_back(key[0]);
+      std::queue<std::pair<int, std::vector<int>>> Mq;
+      Mq.push({key[0], tm});
+      int vi[20] = {0};
+      while (!Mq.empty()) {
+        int i = Mq.front().first;
+        vi[i] = 1;
+        std::vector<int> ve = Mq.front().second;
+        // std::cout << "---------" << std::endl;
+        // std::cout << i << std::endl;
+        // std::cout << ve.size() << std::endl;
+        Mq.pop();
+
+        for (int j = 0; j < DieNum; j++) {
+          if (j == i) continue;
+          if (vi[j] == 1) continue;
+          if (RG.data[i][j] == 0) continue;
+          if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j]) {
+            if (use[i][j] == RG.data[i][j]) continue;
+            std::vector<int> ve1 = ve;
+            ve1.push_back(j);
+            Mq.push({j, ve1});
+            if (j == key[1]) {
+              liantong = 1;
+              //   std::cout << "sddddd1" << std::endl;
+              for (int a = 1; a < ve1.size(); a++) {
+                int ne1 = ve1[a];
+                int ne2 = ve1[a - 1];
+                //      std::cout << "ne1  ne2" << ne1 << " " << ne2
+                //      <<std::endl;
+                G[ne1].push_back(ne2);
+                G[ne2].push_back(ne1);
+              }
+              break;
+            }
+          } else {
+            std::vector<int> ve1 = ve;
+            ve1.push_back(j);
+            Mq.push({j, ve1});
+            if (j == key[1]) {
+              liantong = 1;
+              // std::cout << i << " " << j << std::endl;
+              // std::cout << "sddddd2" << std::endl;
+              for (int a = 1; a < ve1.size(); a++) {
+                int ne1 = ve1[a - 1];
+                int ne2 = ve1[a];
+                //  std::cout << "ne1  ne2" << ne1 << " " << ne2 << std::endl;
+                G[ne1].push_back(ne2);
+                G[ne2].push_back(ne1);
+              }
+              break;
+            }
+          }
+        }
+        if (liantong) break;
+      }
+
+    } else if (key.size() == DieNum) {
       /////
-      // std::cout << "kru" << std::endl;
+      std::cout << "kru" << std::endl;
       ee.clear();
       for (int i = 0; i < DieNum; i++) F[i] = i;
       for (int i = 0; i < DieNum; i++) {
@@ -350,16 +496,204 @@ void solve() {
           // use[v][u]++;
         }
       }
-    }
-    // else if(key.size()>=RG.DieNum/2){
-    //     //斯坦纳森林
-    //     //先拿一半的点去做斯坦纳
-    //     // 不一定最优
-    // }
+    } else if (key.size() >= 13) {
+      std::cout << "merge begin" << std::endl;
 
-    else {
+      for (int i = 0; i < DieNum; ++i) {
+        for (int j = i + 1; j < DieNum; ++j) {
+          if (RG.data[i][j] == 0) continue;  // 不连通则跳出
+          // 在同一个fpga
+          assert(use[i][j] == use[j][i]);
+
+          if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j]) {
+            // 该条sll使用到限制了
+            if (use[i][j] == RG.data[i][j]) continue;
+            // std::cout<<111<<std::endl;
+            Add_Edge(i, j, Edge_Val(use[i][j]));
+            Add_Edge(j, i, Edge_Val(use[j][i]));
+
+          }
+          // 跨fpga
+          else {
+            // std::cout<<222 <<std::endl;
+            Add_Edge(i, j, Wire_Val(use[i][j]));
+            Add_Edge(j, i, Wire_Val(use[j][i]));
+          }
+        }
+      }
+
+      std::vector<int> tmp;
+      tmp = key;
+      key.clear();
+      for (int i = 0; i < 11; i++) {
+        //   std::cout << tmp[i] << std::endl;
+        key.push_back({tmp[i]});
+      }
+      // std::cout << "---------" << std::endl;
+
+      int mx = (1 << (key.size()));
+
+      for (int i = 0; i < DieNum; i++) {
+        for (int j = 0; j < mx; j++) {
+          pre[i][j] = {0};
+        }
+      }
+
+      for (int i = 0; i < DieNum; ++i) {
+        for (int j = 0; j < mx; j++) {
+          dp[i][j] = 1 << 30;
+        }
+      }
+      for (int i = 0; i < key.size(); i++) {
+        dp[key[i]][1 << i] = 0;
+      }
+
+      for (int sta = 1; sta < mx; sta++) {
+        for (int i = 0; i < DieNum; i++) {
+          for (int j = sta & (sta - 1); j; j = sta & (j - 1))
+
+            if (dp[i][j] + dp[i][j ^ sta] < dp[i][sta]) {
+              dp[i][sta] = dp[i][j] + dp[i][j ^ sta];
+
+              pre[i][sta] = {2, j, j ^ sta};
+            }
+
+          if (dp[i][sta] != (1 << 30)) q.push({dp[i][sta], i});
+        }
+
+        dijkstra(sta);
+      }
+      // 记录该轮求解斯坦纳树使用的边
+      fangwen.clear();
+      printedge1(key[0], mx - 1);
+      int tmpnode = key.back();
+      std::cout << "-------------------" << std::endl;
+
+      //----------------------------------
+      key.clear();
+      for (int i = 11; i < tmp.size(); i++) {
+        //     std::cout << tmp[i] << std::endl;
+        key.push_back(tmp[i]);
+      }
+      // std::cout << "=================" << std::endl;
+      mx = (1 << (key.size()));
+
+      for (int i = 0; i < DieNum; i++) {
+        for (int j = 0; j < mx; j++) {
+          pre[i][j] = {0};
+        }
+      }
+
+      for (int i = 0; i < DieNum; ++i) {
+        for (int j = 0; j < mx; j++) {
+          dp[i][j] = 1 << 30;
+        }
+      }
+      for (int i = 0; i < key.size(); i++) {
+        dp[key[i]][1 << i] = 0;
+      }
+
+      for (int sta = 1; sta < mx; sta++) {
+        for (int i = 0; i < DieNum; i++) {
+          for (int j = sta & (sta - 1); j; j = sta & (j - 1))
+
+            if (dp[i][j] + dp[i][j ^ sta] < dp[i][sta]) {
+              dp[i][sta] = dp[i][j] + dp[i][j ^ sta];
+
+              pre[i][sta] = {2, j, j ^ sta};
+            }
+
+          if (dp[i][sta] != (1 << 30)) q.push({dp[i][sta], i});
+        }
+
+        dijkstra(sta);
+      }
+      guanjiandian.clear();
+      printedge2(key[0], mx - 1);
+      //----------------
+      // 将两棵树合并
+      //----------------------------------------------------------
+
+      std::queue<std::pair<int, std::vector<int>>> M_q;
+      int vi[22];
+      //   fangwen.clear();
+      int flagg = 0;
+      for (int i = 0; i < DieNum; i++) {
+        // std::cout << guanjiandian[i] << " " << fangwen[i] << " " <<
+        // std::endl;
+        if (guanjiandian[i] && fangwen[i]) flagg = 1;
+      }
+
+      // std::cout << flagg << std::endl;
+
+      // std::cout << "flaag" << flagg << std::endl;
+      if (!flagg) {
+        //    std::cout << "_---------" << std::endl;
+        int liantong = 0;
+        std::vector<int> tm;
+        tm.push_back(tmpnode);
+        M_q.push({tmpnode, tm});
+
+        while (!M_q.empty()) {
+          int i = M_q.front().first;
+          vi[i] = 1;
+          std::vector<int> ve = M_q.front().second;
+          M_q.pop();
+
+          for (int j = 0; j < DieNum; j++) {
+            if (vi[j] == 1) continue;
+            if (RG.data[i][j] == 0) continue;
+            if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j]) {
+              if (use[i][j] == RG.data[i][j]) continue;
+              std::vector<int> ve1 = ve;
+              ve1.push_back(j);
+              M_q.push({j, ve1});
+              if (guanjiandian[j] == 1) {
+                liantong = 1;
+                for (int a = 1; a < ve1.size(); a++) {
+                  int ne1 = ve1[a];
+                  int ne2 = ve1[a - 1];
+                  //      std::cout << "ne1  ne2" << ne1 << " " << ne2
+                  //      <<std::endl;
+                  Se[ne1].insert(ne2);
+                  Se[ne2].insert(ne1);
+                }
+                break;
+              }
+            } else {
+              std::vector<int> ve1 = ve;
+              ve1.push_back(j);
+              M_q.push({j, ve1});
+              if (guanjiandian[j] == 1) {
+                liantong = 1;
+                for (int a = 1; a < ve1.size(); a++) {
+                  int ne1 = ve1[a];
+                  int ne2 = ve1[a - 1];
+                  //   std::cout << "ne1  ne2" << ne1 << " " << ne2 <<
+                  //   std::endl;
+                  Se[ne1].insert(ne2);
+                  Se[ne2].insert(ne1);
+                }
+                break;
+              }
+            }
+          }
+          if (liantong) break;
+        }
+      }
+
+      //------------
+
+      for (int i = 0; i < DieNum; i++) {
+        std::vector<int> tmp(Se[i].begin(), Se[i].end());
+        G[i] = tmp;
+      }
+      for (int i = 0; i < DieNum; i++) {
+        Se[i].clear();
+      }
+    } else {
       // 对所有点进行连边
-
+      std::cout << "putog" << std::endl;
       for (int i = 0; i < DieNum; ++i) {
         for (int j = i + 1; j < DieNum; ++j) {
           if (RG.data[i][j] == 0) continue;  // 不连通则跳出
@@ -432,6 +766,7 @@ void solve() {
     // 清空生成树连边信息
     for (int i = 0; i < DieNum; i++) {
       G[i].clear();
+      G1[i].clear();
     }
     cnt1 = 0;
   }
@@ -493,13 +828,15 @@ void printnet_path(int netid) {
 
     for (auto v : G[u]) {
       if (!vis2[v]) {
+        G1[u].push_back(v);
+        G1[v].push_back(u);
         vis2[v] = 1;
         std::vector<int> ve1 = ve;
         ve1.push_back(v);
 
         // 不在同一个FPGA
         if (RG.DieToFpga_Map[u] != RG.DieToFpga_Map[v]) {
-          Wire_Net_S[{u, v}].push_back(netid);
+          // Wire_Net_S[{u, v}].push_back(netid);
           use[u][v]++;
           use[v][u]++;
           if (use[u][v] >= RG.data[u][v] * 0.5) {
@@ -545,10 +882,11 @@ void Build_Dfs_Tree(int netid, int u, int fa) {
   id[netid][u] = ++idx;
   l[netid][u] = idx;
   wt[netid][u] = idx;
+  st1[netid][u] = 1;
   double tmp = Net_Die_Val[netid][u];
   Sgt_Trees[netid].a[idx] = tmp;
-  for (auto v : G[u]) {
-    if (v == fa) continue;
+  for (auto v : G1[u]) {
+    if (v == fa || st1[netid][v] == 1) continue;
     Build_Dfs_Tree(netid, v, u);
   }
   r[netid][u] = idx;
@@ -568,13 +906,19 @@ void Assign_wire_info() {
     int all = (Wire_Net_S[{a, b}].size() + 3) / 4 +
               (Wire_Net_S[{b, a}].size() + 3) / 4;
 
+    // std::cout << Wire_Net_S[{a, b}].size() << std::endl;
     if (all <= RG.data[a][b]) {
       int h = 0;
       for (const int netid : Wire_Net_S[{a, b}]) {
         Wire_Res[{a, b}][(h++) / 4 + 1].push_back(netid);
       }
+      int tmp;
+      if (h)
+        tmp = ((h - 1) / 4 + 1);
+      else {
+        tmp = 0;
+      }
 
-      int tmp = ((h - 1) / 4 + 1);
       // 不能紧接着 因为 不同方向不能再同一条Wire
       if (h % 4) {
         h = ((h - 1) / 4 + 1) * 4;
@@ -627,6 +971,9 @@ void Assign_wire_info() {
          [](std::pair<int, double> a, std::pair<int, double> b) -> bool {
            return a.second > b.second;
          });
+    /*for (auto it : x1) {
+      std::cout << it.first << std::endl;
+    }*/
 
     std::vector<std::pair<int, double>> x2;
     for (const int &netid : Wire_Net_S[{b, a}]) {
@@ -927,6 +1274,7 @@ void Assign_wire_info() {
 
 int calcdelay(int netid) {
   // 下标从1开始  0为驱动结点
+  std::unordered_map<std::pair<int, int>, int, pair_hash> fw;
   for (int i = 1; i < RG.Task[netid].size(); i++) {
     // 负载节点
     int id = RG.Task[netid][i].first;
@@ -944,8 +1292,10 @@ int calcdelay(int netid) {
       // 如果不在同一个FPGA
       if (RG.DieToFpga_Map[next1] != RG.DieToFpga_Map[next2]) {
         // 将该条Wire扔进全局的Wire集合
-        Glo_Wire_Set.push_back({next1, next2});
-
+        if (!fw[{next1, next2}]) {
+          fw[{next1, next2}] = 1;
+          Wire_Net_S[{next1, next2}].push_back(netid);
+        }
         // （2*x+1）/2   val% 4.5==0   首先按照只消耗了最低的delay考虑
         // 后续继续动态调整
         Delay_ans += 4.5;
@@ -961,7 +1311,7 @@ int calcdelay(int netid) {
 void adjustpath() {
   // Debug 输出使用情况
   for (int i = 0; i < DieNum; i++) {
-    for (int j = 0; j < RG.DieNum; j++) {
+    for (int j = 0; j < DieNum; j++) {
       std::cout << use[i][j] << " ";
     }
     std::cout << std::endl;
@@ -998,26 +1348,29 @@ void calc_load_delay() {
 
 void Print_Layout_Res() {
   std::ofstream outputFile("./design.route.out");
+  // std::cout << "111111" << std::endl;
 
   if (outputFile.is_open()) {
-    std::unordered_map<int, std::vector<std::pair<int, double>>> Task1 =
-        RG.Task;
+    // std::unordered_map<int, std::vector<std::pair<int, double>>> Task1 =
+    //   RG.Task;
     for (auto &&it : RG.Task) {
-      std::vector<std::pair<int, double>> outve = it.second;
+      // std::vector<std::pair<int, double>> outve = it.second;
 
-      outve.erase(outve.begin());
-
-      sort(outve.begin(), outve.end(),
+      double ma = 0.0;
+      for (int i = 1; i < it.second.size(); i++) {
+        ma = std::max(ma, it.second[i].second);
+      }
+      /*sort(outve.begin(), outve.end(),
            // 时延排序的的lambda函数 从大到小
            [](std::pair<int, double> a, std::pair<int, double> b) -> bool {
              return a.second > b.second;
-           });
+           });*/
 
       // 保存一下使用过的netid
-      Net_Max_Delay.push_back({it.first, outve[0].second});
+      //
+      Net_Max_Delay.push_back({it.first, ma});
 
       // 重新移动到Task  已经排好序 并且已经去点了驱动节点
-      it.second = std::move(outve);
     }
     // 按照所有net的最大值排序
     sort(Net_Max_Delay.begin(), Net_Max_Delay.end(),
@@ -1035,16 +1388,18 @@ void Print_Layout_Res() {
       // 输出netid
       int netid = it.first;
       outputFile << "[" << netid << "]" << std::endl;
-      for (int i = 1; i < Task1[netid].size(); i++) {
-        const std::pair<int, int> &ii = Task1[netid][i];
+      for (int i = 1; i < RG.Task[netid].size(); i++) {
+        const std::pair<int, int> &ii = RG.Task[netid][i];
 
         outputFile << '[';
         // Net_Die_Path[it][id]
         int nodetmp;
         int loader = ii.first;
-
-        if (Net_Die_Path[netid][loader].back() !=
-            *Net_Die_Path[netid][loader].begin()) {
+        if (Net_Die_Path[netid][loader].size() == 0) {
+          std::cout << netid << std::endl;
+        }
+        //     assert(Net_Die_Path[netid][loader].size() >= 1);
+        if (Net_Die_Path[netid][loader].size() != 1) {
           for (const auto node : Net_Die_Path[netid][loader]) {
             if (node != Net_Die_Path[it.first][ii.first].back())
               outputFile << node << ",";
@@ -1054,8 +1409,8 @@ void Print_Layout_Res() {
             }
           }
         } else {
-          nodetmp = Net_Die_Path[netid][ii.first].back();
-          outputFile << Net_Die_Path[netid][ii.first].back() << ']';
+          nodetmp = Net_Die_Path[netid][ii.first][0];
+          outputFile << Net_Die_Path[netid][ii.first][0] << ']';
         }
 
         outputFile << '[';

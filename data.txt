@@ -10,10 +10,10 @@ int Wire_Val(int CurNum) {
 }
 
 case 2 10.5 
-case 3  12.5
-case 4  35.5
+case 3 12.5
+case 4 35.5
 case 5 220
-case 6   13539    
+case 6 13539    
 case 7 897.5
 case 8 909
 case 9 

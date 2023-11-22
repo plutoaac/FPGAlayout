@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/hxm/桌面/test1/include
 
-CXX_FLAGS = -g
+CXX_FLAGS =  -std=c++11 -g
 

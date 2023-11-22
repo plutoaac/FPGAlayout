@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <algorithm>
 class ReadDataSource {
  public:
   static ReadDataSource &getInstance() { return readDataSource; }
@@ -17,6 +18,7 @@ class ReadDataSource {
     _readnet();
     _read_fpga();
     Max_SLL = get_MaxSLL();
+    soo();
   }
   // Wire
   std::vector<std::pair<int, int>> Not_Fpga_Die;
@@ -32,7 +34,10 @@ class ReadDataSource {
   // 驱动节点的数量
   int DriverNum = 0;
   // 求解的每一组net 驱动到负载结点
-  std::unordered_map<int, std::vector<std::pair<int, double>>> Task;
+  std::map<int, std::vector<std::pair<int, double>>> Task;
+
+  std::vector<std::pair<int,std::vector<std::pair<int,double> > > >Tmp;
+
   // 读入design.net文件
   bool _readnet();
   // 读入design.die.position文件
@@ -43,6 +48,8 @@ class ReadDataSource {
   bool _read_fpga();
   // 求最大的DIE间SLL
   int get_MaxSLL();
+
+  void soo();
   ~ReadDataSource() = default;
   static ReadDataSource readDataSource;
   ReadDataSource(const ReadDataSource &) = delete;
