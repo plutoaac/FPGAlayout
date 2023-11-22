@@ -200,11 +200,18 @@ ReadDataSource ReadDataSource::readDataSource(-1);
 void ReadDataSource::soo() {
   std::vector<std::pair<int, std::vector<std::pair<int, double>>>> Tm(
       Task.begin(), Task.end());
-
-  sort(Tm.begin(), Tm.end(),
-       [](std::pair<int, std::vector<std::pair<int, double>>> a,
-          std::pair<int, std::vector<std::pair<int, double>>> c) {
-          return a.second.size() > c.second.size();
-       });
+  if (DieNum >= 16 && Task.size() >= 500000) {
+    sort(Tm.begin(), Tm.end(),
+         [](std::pair<int, std::vector<std::pair<int, double>>> a,
+            std::pair<int, std::vector<std::pair<int, double>>> c) {
+           return a.second.size() > c.second.size();
+         });
+  } else {
+    sort(Tm.begin(), Tm.end(),
+         [](std::pair<int, std::vector<std::pair<int, double>>> a,
+            std::pair<int, std::vector<std::pair<int, double>>> c) {
+           return a.second.size() < c.second.size();
+         });
+  }
   Tmp = Tm;
 }
