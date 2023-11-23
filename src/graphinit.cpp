@@ -124,7 +124,7 @@ struct CompareDelay {
 
 //---------------------------------------------------------------------------
 // 每一个net需要维护一个线段树
-struct SGT {
+/*struct SGT {
   // 线段树的node结点
   struct node {
     int l, r;
@@ -187,11 +187,11 @@ struct SGT {
     if (r > mid) mx = std::max(mx, query_max(rs, l, r));
     return mx;
   }
-};
+};*/
 //-------------------------------------------------------------------------
 
 // 存储每一个线段树
-std::map<int, SGT> Sgt_Trees;
+// std::map<int, SGT> Sgt_Trees;
 
 std::unordered_set<int> Se[V];
 
