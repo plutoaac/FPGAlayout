@@ -390,11 +390,9 @@ void solve() {
             Mq.push({j, ve1});
             if (j == key[1]) {
               liantong = 1;
-
               for (int a = 1; a < ve1.size(); a++) {
                 int ne1 = ve1[a - 1];
                 int ne2 = ve1[a];
-
                 G[ne1].push_back(ne2);
                 G[ne2].push_back(ne1);
               }

@@ -7,8 +7,6 @@
 
 int main() {
   solve();
-
   Print_Layout_Res();
-
   return 0;
 }
