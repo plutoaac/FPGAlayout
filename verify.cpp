@@ -176,13 +176,9 @@ int main() {
         // cout << line[i] << " ";
         tmp += line[i];
       }
-      // cout << endl;
-      //  cout << tmp << endl;
       double DD = atof(tmp.c_str());
       tmp.clear();
       if (flag) Delay += flag * 0.5;
-      // cout << Delay << " " << DD << endl;
-      // cout << mp[netid] << " " << mp1[netid].size() << endl;
       v1.insert(netid);
       if (Delay != DD) {
         cout << Delay << " " << DD << endl;
@@ -207,3 +203,9 @@ int main() {
   std::cout << ma << std::endl;
   cout << endl;
 }
+
+/*
+
+
+
+*/
