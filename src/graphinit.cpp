@@ -124,7 +124,7 @@ struct CompareDelay {
 
 //---------------------------------------------------------------------------
 // 每一个net需要维护一个线段树
-/*struct SGT {
+struct SGT {
   // 线段树的node结点
   struct node {
     int l, r;
@@ -142,10 +142,7 @@ struct CompareDelay {
   // 需要改
   std::unordered_map<int, double> a;
   // push操作维护
-  void pushup(int i) {
-    tr[i].sum = tr[ls].sum + tr[rs].sum;
-    tr[i].maxv = std::max(tr[ls].maxv, tr[rs].maxv);
-  }
+  void pushup(int i) { tr[i].maxv = std::max(tr[ls].maxv, tr[rs].maxv); }
   void build(int i, int l, int r) {
     tr[i] = {l, r};
     if (l == r) {
@@ -187,11 +184,12 @@ struct CompareDelay {
     if (r > mid) mx = std::max(mx, query_max(rs, l, r));
     return mx;
   }
-};*/
+};
+
 //-------------------------------------------------------------------------
 
 // 存储每一个线段树
-// std::map<int, SGT> Sgt_Trees;
+std::map<int, SGT> Sgt_Trees;
 
 std::unordered_set<int> Se[V];
 
@@ -390,9 +388,11 @@ void solve() {
             Mq.push({j, ve1});
             if (j == key[1]) {
               liantong = 1;
+
               for (int a = 1; a < ve1.size(); a++) {
                 int ne1 = ve1[a - 1];
                 int ne2 = ve1[a];
+
                 G[ne1].push_back(ne2);
                 G[ne2].push_back(ne1);
               }
@@ -410,7 +410,6 @@ void solve() {
       for (int i = 0; i < DieNum; i++) {
         for (int j = i + 1; j < DieNum; j++) {
           if (RG.data[i][j] == 0) continue;
-          if (use[i][j] == RG.data[i][j]) continue;
           if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j]) {
             if (use[i][j] == RG.data[i][j]) continue;
             ee.push_back({Edge_Val(use[i][j]), i, j});
@@ -545,7 +544,10 @@ void solve() {
       // 将两棵树合并
 
       std::queue<std::pair<int, std::vector<int>>> M_q;
-      int vi[22];
+      int vi[22]{0};
+      /*for (int i = 0; i < DieNum; i++) {
+        assert(vi[i] == 0);
+      }*/
       int flagg = 0;
       for (int i = 0; i < DieNum; i++) {
         if (guanjiandian[i] && fangwen[i]) flagg = 1;
@@ -673,13 +675,16 @@ void solve() {
     calcdelay(netid);
     Net_Die_Val[netid][RG.NodeToDie_Map[net.second[0].first]] = 0;
 
-    // SGT tmp;
-    // Sgt_Trees[netid] = std::move(tmp);
-
+    if (!is_bigcase()) {
+      SGT tmp;
+      Sgt_Trees[netid] = std::move(tmp);
+    }
     idx = 0;
     Build_Dfs_Tree(netid, RG.NodeToDie_Map[net.second[0].first], -1);
 
-    //  Sgt_Trees[netid].build(1, 1, idx);
+    if (!is_bigcase()) {
+      Sgt_Trees[netid].build(1, 1, idx);
+    }
     // 清空生成树连边信息
     for (int i = 0; i < DieNum; i++) {
       G[i].clear();
@@ -739,7 +744,7 @@ void printnet_path(int netid) {
     for (auto v : G[u]) {
       if (!vis2[v]) {
         G1[u].push_back(v);
-        // G1[v].push_back(u);
+        G1[v].push_back(u);
         vis2[v] = 1;
         std::vector<int> ve1 = ve;
         ve1.push_back(v);
@@ -806,11 +811,14 @@ double query_one(int netid, int x) { return TT[netid][x]; }
 void Build_Dfs_Tree(int netid, int u, int fa) {
   id[netid][u] = ++idx;
   l[netid][u] = idx;
+
   double tmp = Net_Die_Val[netid][u];
-  // Sgt_Trees[netid].a[idx] = tmp;
-  TT[netid][idx] = tmp;
+  if (!is_bigcase())
+    Sgt_Trees[netid].a[idx] = tmp;
+  else
+    TT[netid][idx] = tmp;
   for (auto v : G1[u]) {
-    //  if (v == fa) continue;
+    if (v == fa) continue;
     Build_Dfs_Tree(netid, v, u);
   }
   r[netid][u] = idx;
@@ -830,7 +838,6 @@ void Assign_wire_info() {
     int all = (Wire_Net_S[{a, b}].size() + 3) / 4 +
               (Wire_Net_S[{b, a}].size() + 3) / 4;
 
-    // std::cout << Wire_Net_S[{a, b}].size() << std::endl;
     if (all <= RG.data[a][b]) {
       int h = 0;
       for (const int netid : Wire_Net_S[{a, b}]) {
@@ -888,26 +895,24 @@ void Assign_wire_info() {
 
     std::vector<std::pair<int, double>> x1;
     for (const int &netid : Wire_Net_S[{a, b}]) {
-      // assert(Sgt_Trees[netid].query_max(1, l[netid][b],
-      // r[netid][b]) ==
-      //      query(netid, l[netid][b], r[netid][b]));
-      // x1.push_back(
-      //   {netid, Sgt_Trees[netid].query_max(1, l[netid][b], r[netid][b])});
-      x1.push_back({netid, query(netid, l[netid][b], r[netid][b])});
+      if (is_bigcase())
+        x1.push_back({netid, query(netid, l[netid][b], r[netid][b])});
+      else
+        x1.push_back(
+            {netid, Sgt_Trees[netid].query_max(1, l[netid][b], r[netid][b])});
     }
     sort(x1.begin(), x1.end(),
          [](std::pair<int, double> a, std::pair<int, double> b) -> bool {
            return a.second > b.second;
          });
-    /*for (auto it : x1) {
-      std::cout << it.first << std::endl;
-    }*/
 
     std::vector<std::pair<int, double>> x2;
     for (const int &netid : Wire_Net_S[{b, a}]) {
-      //  x2.push_back(
-      //    {netid, Sgt_Trees[netid].query_max(1, l[netid][a], r[netid][a])});
-      x2.push_back({netid, query(netid, l[netid][a], r[netid][a])});
+      if (is_bigcase())
+        x2.push_back({netid, query(netid, l[netid][a], r[netid][a])});
+      else
+        x2.push_back(
+            {netid, Sgt_Trees[netid].query_max(1, l[netid][a], r[netid][a])});
     }
     sort(x2.begin(), x2.end(),
          [](std::pair<int, double> a, std::pair<int, double> b) -> bool {
@@ -1132,13 +1137,17 @@ void Assign_wire_info() {
         int extra_val = (anspri.size() + 3) / 4 - 1;
         if (!ff) {
           for (auto x : anspri) {
-            add(x, l[x][a], r[x][a], extra_val * 4);
-            // Sgt_Trees[x].change(1, l[x][a], r[x][a], extra_val * 4);
+            if (!is_bigcase())
+              Sgt_Trees[x].change(1, l[x][a], r[x][a], extra_val * 4);
+            else
+              add(x, l[x][a], r[x][a], extra_val * 4);
           }
         } else {
           for (auto x : anspri) {
-            add(x, l[x][b], r[x][b], extra_val * 4);
-            // Sgt_Trees[x].change(1, l[x][b], r[x][b], extra_val * 4);
+            if (!is_bigcase())
+              Sgt_Trees[x].change(1, l[x][b], r[x][b], extra_val * 4);
+            else
+              add(x, l[x][b], r[x][b], extra_val * 4);
           }
         }
       }
@@ -1269,9 +1278,11 @@ void calc_load_delay() {
     for (int i = 1; i < it.second.size(); i++) {
       int loader = it.second[i].first;
       int tmp = id[it.first][RG.NodeToDie_Map[loader]];
-      // double curdelay = Sgt_Trees[it.first].query_sum(1, tmp);
-      double curdelay = query_one(it.first, tmp);
-      //  assert(curdelay==TT[netid],)
+      double curdelay;
+      if (!is_bigcase())
+        curdelay = Sgt_Trees[it.first].query_sum(1, tmp);
+      else
+        curdelay = query_one(it.first, tmp);
       it.second[i].second = curdelay;
     }
   }
@@ -1296,11 +1307,8 @@ void Print_Layout_Res() {
            [](std::pair<int, double> a, std::pair<int, double> b) -> bool {
              return a.second > b.second;
            });*/
-
-      // 保存一下使用过的netid
       //
       Net_Max_Delay.push_back({it.first, ma});
-
       // 重新移动到Task  已经排好序 并且已经去点了驱动节点
     }
     // 按照所有net的最大值排序
@@ -1344,11 +1352,13 @@ void Print_Layout_Res() {
           nodetmp = Net_Die_Path[netid][ii.first][0];
           outputFile << Net_Die_Path[netid][ii.first][0] << ']';
         }
-
         outputFile << '[';
-        // double tmp = Sgt_Trees[netid].query_sum(1, id[netid][nodetmp]);
-        double tmp = TT[netid][id[netid][nodetmp]];
-
+        double tmp;
+        if (!is_bigcase())
+          tmp = Sgt_Trees[netid].query_sum(1, id[netid][nodetmp]);
+        else {
+          tmp = query_one(netid, id[netid][nodetmp]);
+        }
         if (tmp != (int)tmp)
           outputFile << std::fixed << std::setprecision(1) << tmp;
         else {
@@ -1369,7 +1379,6 @@ void Print_Layout_Res() {
                   << it.second << std::endl;
     }
     outputFile1.close();
-
     outputFile.close();
   } else {
     // 错误处理
