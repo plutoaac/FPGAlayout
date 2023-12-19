@@ -67,9 +67,16 @@ bool ReadDataSource::_read_die_position() {
 
       ++Dieidx;
 
+     // std::cout << "dieIDX"
+       //         << " " << Dieidx << std::endl;
       std::string tmp;
 
-      for (int i = 0; i < line.size(); i++) {
+      int i = 0;
+      for (;; i++) {
+        if (line[i] == ':') break;
+      }
+      i++;
+      for (; i < line.size(); i++) {
         if (line[i] == ' ' && line[i - tmp.size() - 1] == 'p') {
           tmp = "-" + tmp;
 
@@ -85,6 +92,7 @@ bool ReadDataSource::_read_die_position() {
 
         } else if (line[i] == ' ') {
           int cnt = std::stoi(tmp.c_str());
+          // std::cout << cnt << std::endl;
 
           NodeToDie_Map[cnt] = Dieidx;
 

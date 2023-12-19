@@ -33,7 +33,7 @@ struct pair_hash {
 //------------------------------------------------
 
 // 全局最大延时
-double Glo_Max_Delay;
+// double Glo_Max_Delay;
 std::vector<std::pair<int, double>> out;
 // 每一组的最大延时
 // Die的数量
@@ -319,19 +319,25 @@ void solve() {
   Set_DieNum();
   int cn = 0;
   for (auto net : RG.Tmp) {
+     
     Init_Graph();
 
     int netid = net.first;
-    std::cout << ++cn << std::endl;
-    std::cout << netid << " " << std::endl;
-    std::cout << "----" << std::endl;
+     
+
+    // std::cout << ++cn << std::endl;
+    // std::cout << netid << " " << std::endl;
+    // std::cout << "----" << std::endl;
     std::vector<int> key;
 
     int vis[22] = {0};
 
     for (auto node : net.second) {
+      // std::cout<<node.first<<std::endl;
+      //std::cout<<RG.NodeToDie_Map[node.first]<<std::endl;
       vis[RG.NodeToDie_Map[node.first]] = 1;
     }
+    // return ;
 
     if (is_bigcase()) {
       std::unordered_map<int, int> ke;
@@ -341,6 +347,7 @@ void solve() {
       for (auto it : ke) {
         key.push_back(it.first);
       }
+      
     } else {
       for (int i = 0; i < DieNum; ++i) {
         if (vis[i]) key.push_back(i);
@@ -348,7 +355,7 @@ void solve() {
     }
 
     if (key.size() == 2 && is_bigcase()) {
-      std::cout << "liangge" << std::endl;
+      // std::cout << "liangge" << std::endl;
       int liantong = 0;
 
       std::vector<int> tm;
@@ -404,7 +411,7 @@ void solve() {
       }
 
     } else if (key.size() == DieNum) {
-      std::cout << "kru" << std::endl;
+      //  std::cout << "kru" << std::endl;
       ee.clear();
       for (int i = 0; i < DieNum; i++) F[i] = i;
       for (int i = 0; i < DieNum; i++) {
@@ -435,7 +442,7 @@ void solve() {
         }
       }
     } else if (key.size() >= 13 && is_bigcase()) {
-      std::cout << "merge begin" << std::endl;
+      //   std::cout << "merge begin" << std::endl;
 
       for (int i = 0; i < DieNum; ++i) {
         for (int j = i + 1; j < DieNum; ++j) {
@@ -613,7 +620,7 @@ void solve() {
       }
     } else {
       // 对所有点进行连边
-      std::cout << "putog" << std::endl;
+      // std::cout << "putog" << std::endl;
       for (int i = 0; i < DieNum; ++i) {
         for (int j = i + 1; j < DieNum; ++j) {
           if (RG.data[i][j] == 0) continue;  // 不连通则跳出
@@ -870,7 +877,8 @@ void Assign_wire_info() {
               else
                 outputFile << x << ']';
             }
-            outputFile << "zheng4" << std::endl;
+            //outputFile << "4" << std::endl;
+             outputFile << "zheng4" << std::endl;
           } else {
             outputFile << '[';
             for (auto x : Wire_Res[{a, b}][i]) {
@@ -879,7 +887,8 @@ void Assign_wire_info() {
               else
                 outputFile << x << ']';
             }
-            outputFile << "f4" << std::endl;
+           // outputFile << "4" << std::endl;
+             outputFile << "f4" << std::endl;
           }
         }
 
@@ -1195,8 +1204,7 @@ void Assign_wire_info() {
             }
           }
           if (4 * ((anspri.size() + 3) / 4))
-            outputFile << "]zheng" << 4 * ((anspri.size() + 3) / 4)
-                       << std::endl;
+            outputFile << "]zheng" << 4 * ((anspri.size() + 3) / 4) << std::endl;
           else {
             outputFile << "]f" << 4 * ((anspri1.size() + 3) / 4) << std::endl;
           }
@@ -1320,7 +1328,7 @@ void Print_Layout_Res() {
            return a.second > b.second;
          });
 
-    Glo_Max_Delay = std::max(Glo_Max_Delay, Net_Max_Delay[0].second);
+    // Glo_Max_Delay = std::max(Glo_Max_Delay, Net_Max_Delay[0].second);
 
     //------------------------------------------------
     // it.first为netid
@@ -1369,16 +1377,16 @@ void Print_Layout_Res() {
     }
 
     /// 按照最大值排序 net
-    std::ofstream outputFile1("./design.MAX.out");
-    outputFile1 << "max val :";
-    outputFile1 << std::fixed << std::setprecision(1) << Glo_Max_Delay
-                << std::endl;
-    outputFile1 << "--------------------------------------------" << std::endl;
-    for (auto it : Net_Max_Delay) {
-      outputFile1 << it.first << " " << std::fixed << std::setprecision(1)
-                  << it.second << std::endl;
-    }
-    outputFile1.close();
+    // std::ofstream outputFile1("./design.MAX.out");
+    // outputFile1 << "max val :";
+    // outputFile1 << std::fixed << std::setprecision(1) << Glo_Max_Delay
+    //             << std::endl;
+    // outputFile1 << "--------------------------------------------" <<
+    // std::endl; for (auto it : Net_Max_Delay) {
+    //   outputFile1 << it.first << " " << std::fixed << std::setprecision(1)
+    //               << it.second << std::endl;
+    // }
+    // outputFile1.close();
     outputFile.close();
   } else {
     // 错误处理

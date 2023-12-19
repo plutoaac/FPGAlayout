@@ -181,6 +181,7 @@ int main() {
       if (flag) Delay += flag * 0.5;
       v1.insert(netid);
       if (Delay != DD) {
+        cout << netid << endl;
         cout << Delay << " " << DD << endl;
       }
       assert(Delay == DD);
@@ -203,9 +204,3 @@ int main() {
   std::cout << ma << std::endl;
   cout << endl;
 }
-
-/*
-
-
-
-*/
