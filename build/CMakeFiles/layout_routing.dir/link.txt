@@ -1,1 +1,1 @@
-/usr/bin/g++  -std=c++11 -g -rdynamic CMakeFiles/layout_routing.dir/src/_readdata.cpp.o CMakeFiles/layout_routing.dir/src/graphinit.cpp.o CMakeFiles/layout_routing.dir/src/main.cpp.o -o layout_routing 
+/usr/bin/g++  -fopenmp -O3 -std=c++20 -rdynamic CMakeFiles/layout_routing.dir/src/_readdata.cpp.o CMakeFiles/layout_routing.dir/src/graphinit.cpp.o CMakeFiles/layout_routing.dir/src/main.cpp.o -o layout_routing 

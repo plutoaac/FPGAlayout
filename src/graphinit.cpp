@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "_readdata.h"
+#include "parallel_sort.h"
 
 // Prework
 //----------------------------------------------------------------------
@@ -91,7 +92,9 @@ std::unordered_map<int, int> F;
 
 // DFS序 使用的数据
 std::unordered_map<int, std::map<int, int>> l;
+
 std::unordered_map<int, std::map<int, int>> r;
+
 std::unordered_map<int, std::map<int, int>> id;
 int idx{0};
 
@@ -201,7 +204,7 @@ std::unordered_map<int, std::vector<std::pair<int, int>>> Merge_S;
 // 每一次处理Die时需要初始化
 void Init_Graph() {
   cnt1 = 0;
-  // memset(h, -1, sizeof(h));
+  // memset(h, -1, sizeof(h));  // 会simd 矢量化
   for (int i = 0; i < DieNum; i++) {
     h[i] = -1;
   }
@@ -236,7 +239,7 @@ int Wire_Val(int CurNum) {
   return 4;
 }
 
-int Set_DieNum() {
+void Set_DieNum() {
   DieNum = RG.DieNum;
   netnum = RG.Task.size();
 }
@@ -246,11 +249,14 @@ void dijkstra(int s) {
   for (int i = 0; i < DieNum; i++) {
     st[i] = 0;
   }
+  // memset(st, sizeof(st), 0);  // simd
   while (!q.empty()) {
     int u = q.top().second;
+
     q.pop();
 
     if (st[u]) continue;
+
     st[u] = 1;
     for (int i = h[u]; ~i; i = ne[i]) {
       int v = e[i];
@@ -319,11 +325,9 @@ void solve() {
   Set_DieNum();
   int cn = 0;
   for (auto net : RG.Tmp) {
-     
     Init_Graph();
 
     int netid = net.first;
-     
 
     // std::cout << ++cn << std::endl;
     // std::cout << netid << " " << std::endl;
@@ -334,23 +338,30 @@ void solve() {
 
     for (auto node : net.second) {
       // std::cout<<node.first<<std::endl;
-      //std::cout<<RG.NodeToDie_Map[node.first]<<std::endl;
+      // std::cout<<RG.NodeToDie_Map[node.first]<<std::endl;
       vis[RG.NodeToDie_Map[node.first]] = 1;
     }
     // return ;
 
     if (is_bigcase()) {
       std::unordered_map<int, int> ke;
+#pragma parallel for
       for (int i = 0; i < DieNum; ++i) {
-        if (vis[i]) ke[i] = 1;
+        if (vis[i]) {
+          ke[i] = 1;
+        }
       }
+
       for (auto it : ke) {
         key.push_back(it.first);
       }
-      
     } else {
+#pragma parallel for
       for (int i = 0; i < DieNum; ++i) {
-        if (vis[i]) key.push_back(i);
+        if (vis[i]) {
+#pragma omp critical
+          key.push_back(i);
+        }
       }
     }
 
@@ -413,6 +424,7 @@ void solve() {
     } else if (key.size() == DieNum) {
       //  std::cout << "kru" << std::endl;
       ee.clear();
+#pragma parallel for
       for (int i = 0; i < DieNum; i++) F[i] = i;
       for (int i = 0; i < DieNum; i++) {
         for (int j = i + 1; j < DieNum; j++) {
@@ -425,7 +437,8 @@ void solve() {
           }
         }
       }
-      sort(ee.begin(), ee.end());
+      // sort(ee.begin(), ee.end());
+      quick_sort(ee.data(), ee.size());
       for (int i = 0; i < ee.size(); i++) {
         int w = ee[i][0];
         int u = ee[i][1];
@@ -476,17 +489,27 @@ void solve() {
 
       int mx = (1 << (key.size()));
 
+#pragma omp parallel for collapse(2)
       for (int i = 0; i < DieNum; i++) {
         for (int j = 0; j < mx; j++) {
           pre[i][j] = {0};
         }
       }
 
+#pragma omp parallel for collapse(2)
+      for (int i = 0; i < DieNum; i++) {
+        for (int j = 0; j < mx; j++) {
+          pre[i][j] = {0};
+        }
+      }
+
+#pragma omp parallel for collapse(2)
       for (int i = 0; i < DieNum; ++i) {
         for (int j = 0; j < mx; j++) {
           dp[i][j] = 1 << 30;
         }
       }
+#pragma omp parallel for
       for (int i = 0; i < key.size(); i++) {
         dp[key[i]][1 << i] = 0;
       }
@@ -516,20 +539,25 @@ void solve() {
       }
       mx = (1 << (key.size()));
 
+#pragma omp parallel for collapse(2)
       for (int i = 0; i < DieNum; i++) {
         for (int j = 0; j < mx; j++) {
           pre[i][j] = {0};
         }
       }
 
+#pragma omp parallel for collapse(2)
       for (int i = 0; i < DieNum; ++i) {
         for (int j = 0; j < mx; j++) {
           dp[i][j] = 1 << 30;
         }
       }
+
+#pragma omp parallel for
       for (int i = 0; i < key.size(); i++) {
         dp[key[i]][1 << i] = 0;
       }
+
       for (int sta = 1; sta < mx; sta++) {
         for (int i = 0; i < DieNum; i++) {
           for (int j = sta & (sta - 1); j; j = sta & (j - 1))
@@ -556,6 +584,7 @@ void solve() {
         assert(vi[i] == 0);
       }*/
       int flagg = 0;
+#pragma omp parallel for
       for (int i = 0; i < DieNum; i++) {
         if (guanjiandian[i] && fangwen[i]) flagg = 1;
       }
@@ -575,12 +604,16 @@ void solve() {
 
           for (int j = 0; j < DieNum; j++) {
             if (vi[j] == 1) continue;
+
             if (RG.data[i][j] == 0) continue;
+
             if (RG.DieToFpga_Map[i] == RG.DieToFpga_Map[j]) {
               if (use[i][j] == RG.data[i][j]) continue;
+
               std::vector<int> ve1 = ve;
               ve1.push_back(j);
               M_q.push({j, ve1});
+
               if (guanjiandian[j] == 1) {
                 liantong = 1;
                 for (int a = 1; a < ve1.size(); a++) {
@@ -644,17 +677,21 @@ void solve() {
       // 状态数量
       int mx = (1 << (key.size()));
 
+#pragma omp parallel for collapse(2)
       for (int i = 0; i < DieNum; i++) {
         for (int j = 0; j < mx; j++) {
           pre[i][j] = {0};
         }
       }
 
+#pragma omp parallel for collapse(2)
       for (int i = 0; i < DieNum; ++i) {
         for (int j = 0; j < mx; j++) {
           dp[i][j] = 1 << 30;
         }
       }
+
+#pragma omp parallel for
       for (int i = 0; i < key.size(); i++) {
         dp[key[i]][1 << i] = 0;
       }
@@ -693,6 +730,7 @@ void solve() {
       Sgt_Trees[netid].build(1, 1, idx);
     }
     // 清空生成树连边信息
+#pragma omp parallel for
     for (int i = 0; i < DieNum; i++) {
       G[i].clear();
       G1[i].clear();
@@ -714,6 +752,8 @@ void Init_Tree(int netid) {
     if (it.first == RG.Task[netid][0].first) continue;
     Net_DieToNode[netid][RG.NodeToDie_Map[it.first]].push_back(it.first);
   }
+
+#pragma omp parallel for
   for (int i = 0; i < DieNum; i++) {
     vis2[i] = 0;
   }
@@ -803,6 +843,8 @@ void printnet_path(int netid) {
 std::unordered_map<int, std::unordered_map<int, double>> TT;
 double query(int netid, int l, int r) {
   double ma = 0;
+
+#pragma omp parallel for schedule(dynamic)
   for (int i = l; i <= r; i++) {
     ma = std::max(ma, TT[netid][i]);
   }
@@ -877,8 +919,8 @@ void Assign_wire_info() {
               else
                 outputFile << x << ']';
             }
-            //outputFile << "4" << std::endl;
-             outputFile << "zheng4" << std::endl;
+            // outputFile << "4" << std::endl;
+            outputFile << "zheng4" << std::endl;
           } else {
             outputFile << '[';
             for (auto x : Wire_Res[{a, b}][i]) {
@@ -887,8 +929,8 @@ void Assign_wire_info() {
               else
                 outputFile << x << ']';
             }
-           // outputFile << "4" << std::endl;
-             outputFile << "f4" << std::endl;
+            // outputFile << "4" << std::endl;
+            outputFile << "f4" << std::endl;
           }
         }
 
@@ -1204,7 +1246,8 @@ void Assign_wire_info() {
             }
           }
           if (4 * ((anspri.size() + 3) / 4))
-            outputFile << "]zheng" << 4 * ((anspri.size() + 3) / 4) << std::endl;
+            outputFile << "]zheng" << 4 * ((anspri.size() + 3) / 4)
+                       << std::endl;
           else {
             outputFile << "]f" << 4 * ((anspri1.size() + 3) / 4) << std::endl;
           }
@@ -1218,7 +1261,7 @@ void Assign_wire_info() {
   }
 }
 
-int calcdelay(int netid) {
+void calcdelay(int netid) {
   // 下标从1开始  0为驱动结点
   std::unordered_map<std::pair<int, int>, int, pair_hash> fw;
   for (int i = 1; i < RG.Task[netid].size(); i++) {

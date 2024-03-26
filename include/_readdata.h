@@ -1,4 +1,5 @@
 #pragma once
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -7,7 +8,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <algorithm>
 class ReadDataSource {
  public:
   static ReadDataSource &getInstance() { return readDataSource; }
@@ -36,7 +36,7 @@ class ReadDataSource {
   // 求解的每一组net 驱动到负载结点
   std::map<int, std::vector<std::pair<int, double>>> Task;
 
-  std::vector<std::pair<int,std::vector<std::pair<int,double> > > >Tmp;
+  std::vector<std::pair<int, std::vector<std::pair<int, double>>>> Tmp;
 
   // 读入design.net文件
   bool _readnet();

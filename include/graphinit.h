@@ -5,10 +5,7 @@
 constexpr int V = 22;
 
 constexpr int E = 1000;
-// extern int h[V], e[E], ne[E], w[E];
-// extern int cnt1;
-// extern int vis[V];
-// extern int dp[V][1ll << 21];
+
 // 重新初始化Net数据
 void Init_Graph();
 // 进行建图
@@ -28,27 +25,23 @@ void printedge(int a, int b);
 // 输出路径
 void printnet_path(int netid);
 // 计算延时
-int calcdelay(int netid);
+void calcdelay(int netid);
 // 调整路径
 void adjustpath();
 // 初始化生成树
 void Init_Tree(int netid);
 // Die的数量
-int Set_DieNum();
-//分配wire信息（***方向）
+void Set_DieNum();
+// 分配wire信息（***方向）
 void Assign_wire_info();
-//输出布线结果
+// 输出布线结果
 void Print_Layout_Res();
-//输出TDM分配结果
+// 输出TDM分配结果
 void Print_Tdm_Res();
-//并查集find函数
+// 并查集find函数
 int find(int x);
 int Find(int x);
-//建立DFS树
-void Build_Dfs_Tree(int netid, int u,int fa);
-//计算每一个负载的delay
+// 建立DFS树
+void Build_Dfs_Tree(int netid, int u, int fa);
+// 计算每一个负载的delay
 void calc_load_delay();
-
-
-
-

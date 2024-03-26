@@ -1,0 +1,3 @@
+/home/hxm/桌面/test1/CMakeFiles/layout_routing.dir
+/home/hxm/桌面/test1/CMakeFiles/edit_cache.dir
+/home/hxm/桌面/test1/CMakeFiles/rebuild_cache.dir

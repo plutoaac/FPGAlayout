@@ -67,8 +67,8 @@ bool ReadDataSource::_read_die_position() {
 
       ++Dieidx;
 
-     // std::cout << "dieIDX"
-       //         << " " << Dieidx << std::endl;
+      // std::cout << "dieIDX"
+      //         << " " << Dieidx << std::endl;
       std::string tmp;
 
       int i = 0;

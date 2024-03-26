@@ -1,17 +1,17 @@
 [
 {
   "directory": "/home/hxm/桌面/test1/build",
-  "command": "/usr/bin/g++  -I/home/hxm/桌面/test1/include  -std=c++11 -g -o CMakeFiles/layout_routing.dir/src/_readdata.cpp.o -c /home/hxm/桌面/test1/src/_readdata.cpp",
+  "command": "/usr/bin/g++  -I/home/hxm/桌面/test1/include  -fopenmp -O3 -std=c++20 -g -o CMakeFiles/layout_routing.dir/src/_readdata.cpp.o -c /home/hxm/桌面/test1/src/_readdata.cpp",
   "file": "/home/hxm/桌面/test1/src/_readdata.cpp"
 },
 {
   "directory": "/home/hxm/桌面/test1/build",
-  "command": "/usr/bin/g++  -I/home/hxm/桌面/test1/include  -std=c++11 -g -o CMakeFiles/layout_routing.dir/src/graphinit.cpp.o -c /home/hxm/桌面/test1/src/graphinit.cpp",
+  "command": "/usr/bin/g++  -I/home/hxm/桌面/test1/include  -fopenmp -O3 -std=c++20 -g -o CMakeFiles/layout_routing.dir/src/graphinit.cpp.o -c /home/hxm/桌面/test1/src/graphinit.cpp",
   "file": "/home/hxm/桌面/test1/src/graphinit.cpp"
 },
 {
   "directory": "/home/hxm/桌面/test1/build",
-  "command": "/usr/bin/g++  -I/home/hxm/桌面/test1/include  -std=c++11 -g -o CMakeFiles/layout_routing.dir/src/main.cpp.o -c /home/hxm/桌面/test1/src/main.cpp",
+  "command": "/usr/bin/g++  -I/home/hxm/桌面/test1/include  -fopenmp -O3 -std=c++20 -g -o CMakeFiles/layout_routing.dir/src/main.cpp.o -c /home/hxm/桌面/test1/src/main.cpp",
   "file": "/home/hxm/桌面/test1/src/main.cpp"
 }
 ]
